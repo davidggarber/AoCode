@@ -30,7 +30,7 @@ private:
 /// Used for timing durations for performance comparisons.
 /// Will automatically output statistics to cout in destructor.
 /// </summary>
-class StopwatchConsole : public Stopwatch
+class Stats : public Stopwatch
 {
 public:
 	/// <summary>
@@ -38,13 +38,19 @@ public:
 	/// </summary>
 	/// <param name="day">The challenge's day - 1 to 25</param>
 	/// <param name="part">The challenge part within the day - 1 or 2</param>
-	StopwatchConsole(int day, int part);
+	Stats(int day, int part);
 	
 	/// <summary>
 	/// Measures ellapsed time.
 	/// Writes stats to cout, labelling with {day}.{part}
 	/// </summary>
-	virtual ~StopwatchConsole();
+	virtual ~Stats();
+
+	/// <summary>
+	/// Calculate how much memory the program is using at this moment
+	/// </summary>
+	/// <returns>How many megabytes of working set</returns>
+	double MeasureMemory();
 
 protected:
 	int _day;

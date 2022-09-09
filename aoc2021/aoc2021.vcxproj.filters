@@ -18,13 +18,19 @@
     <ClCompile Include="aoc2021.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Day1.cpp">
+    <ClCompile Include="Day1a.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Stopwatch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Day1a.cpp">
+    <ClCompile Include="Day1b.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Day1c.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Day1.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

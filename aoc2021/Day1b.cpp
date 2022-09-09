@@ -1,17 +1,17 @@
-#include <chrono>
 #include <iostream>
 #include <fstream>
 #include <string>
+#include "Stopwatch.h"
 
-//using namespace std;
-
-namespace Day1a
+namespace Day1b
 {
+    auto data_file = "Data\\Day1.txt";
 
     bool Part1()
     {
-        auto path = "Data\\Day1.txt";
-        std::ifstream file(path);
+        Stats timer(1, 1);
+
+        std::ifstream file(data_file);
         if (!file.is_open())
             return false;
 
@@ -26,15 +26,15 @@ namespace Day1a
             prev = depth;
         }
 
-        std::cout << "Part 1\n";
         std::cout << count << "\n";
         return true;
     }
 
     bool Part2()
     {
-        auto path = "Data\\Day1.txt";
-        std::ifstream file(path);
+        Stats timer(1, 2);
+
+        std::ifstream file(data_file);
         if (!file.is_open())
             return false;
 
@@ -60,23 +60,13 @@ namespace Day1a
                 count++;
         }
 
-        std::cout << "Part 2\n";
         std::cout << count << "\n";
         return true;
     }
 
     extern void Both()
     {
-        auto start = std::chrono::high_resolution_clock::now();
-
-        std::cout << "Day 1\n";
         if (Part1())
             Part2();
-
-
-        auto finish = std::chrono::high_resolution_clock::now();
-        double ms = std::chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count() / 1000000.0;
-        std::cout << "Total time: " << ms << "ms\n";
     }
-
 }

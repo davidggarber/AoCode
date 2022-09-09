@@ -1,14 +1,14 @@
 // aoc2021.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
-namespace Day1a
-{ 
-    extern void Both();
+namespace Day1
+{
+    extern void Part1();
 }
 
 int main()
 {
-    Day1a::Both();
+    Day1::Part1();
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu

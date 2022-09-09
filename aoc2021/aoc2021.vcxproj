@@ -131,6 +131,8 @@
     <ClCompile Include="aoc2021.cpp" />
     <ClCompile Include="Day1.cpp" />
     <ClCompile Include="Day1a.cpp" />
+    <ClCompile Include="Day1b.cpp" />
+    <ClCompile Include="Day1c.cpp" />
     <ClCompile Include="Stopwatch.cpp" />
   </ItemGroup>
   <ItemGroup>
