@@ -5,6 +5,7 @@
 #include <algorithm>
 #include "Stopwatch.h"
 
+// https://adventofcode.com/2021/day/2
 namespace Day2
 {
     auto data_file = "Data\\Day2.txt";
@@ -74,7 +75,7 @@ namespace Day2
 
     /// <summary>
     /// Run parts 1 and 2.
-    /// Or just part 1, if it returns false.
+    /// Time each of them.
     /// </summary>
     extern void Both()
     {

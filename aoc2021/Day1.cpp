@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 
+// https://adventofcode.com/2021/day/1
 namespace Day1
 {
     void Part1()
