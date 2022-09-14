@@ -133,6 +133,7 @@
     <ClCompile Include="Day1a.cpp" />
     <ClCompile Include="Day1b.cpp" />
     <ClCompile Include="Day1c.cpp" />
+    <ClCompile Include="Day2.cpp" />
     <ClCompile Include="Stopwatch.cpp" />
   </ItemGroup>
   <ItemGroup>
