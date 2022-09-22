@@ -6,10 +6,6 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "aoc2021", "aoc2021.vcxproj", "{F2D63437-BDE1-4DEF-9B5B-0C9D5595E074}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{04D6F903-D689-4F33-9FE9-C51D00F7AB24}"
-	ProjectSection(SolutionItems) = preProject
-		Data\Day1.txt = Data\Day1.txt
-		Data\Day2.txt = Data\Day2.txt
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
