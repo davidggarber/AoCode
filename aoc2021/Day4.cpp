@@ -124,7 +124,7 @@ namespace Day4
         for (auto pit = data.pulls.begin(); pit != data.pulls.end(); pit++)
         {
             int pull = *pit;
-            for (int b = data.boards.size() - 1; b >= 0; b--)
+            for (int b = (int)data.boards.size() - 1; b >= 0; b--)
             {
                 if (data.boards[b].check(pull))
                 {
@@ -145,11 +145,11 @@ namespace Day4
     extern void Both()
     {
         {
-            Stats timer(1, 1);
+            Stats timer(4, 1);
             cout << Part1() << "\n";
         }
         {
-            Stats timer(1, 2);
+            Stats timer(4, 2);
             cout << Part2() << "\n";
         }
     }

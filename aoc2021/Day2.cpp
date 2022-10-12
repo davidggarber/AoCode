@@ -80,11 +80,11 @@ namespace Day2
     extern void Both()
     {
         {
-            Stats timer(1, 1);
+            Stats timer(2, 1);
             std::cout << Part1() << "\n";
         }
         {
-            Stats timer(1, 2);
+            Stats timer(2, 2);
             std::cout << Part2() << "\n";
         }
     }

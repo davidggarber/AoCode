@@ -153,14 +153,14 @@ namespace Day3
     /// Run parts 1 and 2.
     /// Time each of them.
     /// </summary>
-    extern void Both()
+    void Both()
     {
         {
-            Stats timer(1, 1);
+            Stats timer(3, 1);
             std::cout << Part1() << "\n";
         }
         {
-            Stats timer(1, 2);
+            Stats timer(3, 2);
             std::cout << Part2() << "\n";
         }
     }
