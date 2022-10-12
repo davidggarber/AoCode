@@ -68,6 +68,7 @@ namespace Day5
         }
 
         // The distance from here to p along the unit vector
+        // (This assumes p is on the line and this < p)
         int Len(const Point& p) const
         {
             if (x != p.x)
@@ -119,12 +120,6 @@ namespace Day5
         {
         }
 
-        bool Empty() const { return len >= 0; }
-        int Left() const { return min(start.x, start.x + dir.x * len); }
-        int Right() const { return max(start.x, start.x + dir.x * len); }
-        int Top() const { return start.y; }
-        int Bottom() const { return start.y + dir.y * len; }
-
         bool Read(ifstream& file)
         {
             if (file.eof())
@@ -163,18 +158,26 @@ namespace Day5
                 if (GetOverlap(*it, overlap))
                 {
                     for (int j = 0; j <= overlap.len; j++)
+                    {
+                        Point p = overlap.start.Offset(overlap.dir, j);
                         intersections.insert(overlap.start.Offset(overlap.dir, j));
+                    }
                 }
             }
         }
 
-        // Do the bounding rectangles of the two segments intersect?
-        bool IntersectsRect(const Segment& s) const
+        // Is this point on the line defined by this segment 
+        // (even if beyond the ends)
+        bool PointOnLine(const Point& p) const
         {
-            return Left() <= s.Right()
-                && Right() >= s.Left()
-                && Top() <= s.Bottom()
-                && Bottom() >= s.Top();
+            if (dir.x == 0)
+                return p.x == start.x;
+            if (dir.y == 0)
+                return p.y == start.y;
+            // We're diagonal. Offsets must be the same for x and y
+            int dx = (p.x - start.x) / dir.x;
+            int dy = (p.y - start.y) / dir.y;
+            return dx == dy;
         }
 
         // Get the overlap between this segment and another.
@@ -189,15 +192,11 @@ namespace Day5
             if (dir == o.dir)
             {
                 // Parallel
-                lap.dir = dir;
-
-                // We know this is before o, so o-this must be >= 0. -1 indicates a miss
-                int t = dir.x != 0 ? ((o.start.x - start.x) / dir.x) : o.start.x == start.x ? 0 : -1;
-                int u = dir.y != 0 ? ((o.start.y - start.y) / dir.y) : o.start.y == start.y ? 0 : -1;
-                if (t != u && t != 0 && u != 0)
+                if (!PointOnLine(o.start))
                     return false;
-                if (t == 0)
-                    t = u;
+
+                lap.dir = dir;
+                int t = start.Len(o.start);
                 if (t > len || t < 0)
                     return false;
 
@@ -208,37 +207,53 @@ namespace Day5
             }
 
             // Two non-parallel segments can overlap on at most 1 point
-            lap.dir.y = 1;
             lap.len = 0;
+            lap.dir = dir;  // direction doesn't matter when len==0
 
-            // Parameterized linear algebra
-            // Rephrase our segment as x=(a+bt), y=(c+dt) at offset t
-            // Using e,f,g,h and u for the other segment, we get
-            // a+bt == e+fu && c+dt == g+hu
-            // Because the two segments aren't parellel, if b is zero, both f and d are not.
-            // (ditto with all similar combinations)
-            // Where b or f can be zero, but never both. Same with d and h.
-            // t = (e+fu-a)/b OR (g+hu-c)/d
-            // Then
-            // c+d(e+fu-a)/b == g+hu OR a+b(g+hu-c)/d == e+fu
-            // c+de/b+dfu/b-a/b == g+hu
-            // c+de/b-a/b-g == hu - dfu == u(h - df)
-            // u == (c+de/b-a/b-g)/(h-df)
-            if (dir.x != 0)
+            if (dir.x == 0)
             {
-                int u = (start.y + o.start.x * dir.y / dir.x - start.x / dir.x - o.dir.x) / (o.dir.y - dir.y * o.start.y);
-                if (u < 0 || u > o.len)
+                // We are vertical. Find where o crosses
+                // e+ft=a
+                int t = (start.x - o.start.x) / o.dir.x;
+                if (t < 0 || t > o.len)
                     return false;
-                lap.start = o.start.Offset(o.dir, u);
-                return true;
+                lap.start = o.start.Offset(o.dir, t);
+                int u = (lap.start.y - start.y) / dir.y;
+                return u >= 0 && u <= len;
             }
-            else
+            if (o.dir.x == 0)
             {
-                int t = (o.start.y + start.x * o.dir.y / o.dir.x - o.start.x / o.dir.x - dir.x) / (dir.y - o.dir.y * start.y);
+                // O is vertical. Find where we cross
+                // a+bt=e
+                int t = (o.start.x - start.x) / dir.x;
                 if (t < 0 || t > len)
                     return false;
                 lap.start = start.Offset(dir, t);
-                return true;
+                int u = (lap.start.y - o.start.y) / o.dir.y;
+                return u >= 0 && u <= o.len;
+            }
+            else
+            {
+                // Neither is vertical. Both have simple slopes
+                // y = mx + b
+                int m = dir.y / dir.x;
+                int om = o.dir.y / o.dir.x;
+                // m != om, because lines aren't parallel
+                int b = start.y - m * start.x;
+                int ob = o.start.y - om * o.start.x;
+                // Find at what x they cross
+                // mx+b = omx+ob
+                // mx-omx = ob-b
+                int x = (ob - b) / (m - om);
+                // Does that x happen within both of their ranges?
+                int t = (x - start.x) / dir.x;
+                int u = (x - o.start.x) / o.dir.x;
+                if (t < 0 || t > len || u < 0 || u > o.len)
+                    return false;
+                // Do they cross at the same y?
+                lap.start = start.Offset(dir, t);
+                Point p = o.start.Offset(o.dir, u);
+                return lap.start == p;
             }
         }
     };
@@ -289,7 +304,7 @@ namespace Day5
             data.segments[i].PushIntersections(intersections, data.segments.begin(), i);
         }
 
-        return 0;
+        return intersections.size();
     }
 
     /// <summary>
