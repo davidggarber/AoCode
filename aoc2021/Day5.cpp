@@ -178,7 +178,8 @@ namespace Day5
             }
         }
 
-        bool Intersects(const Segment& s) const
+        // Do the bounding rectangles of the two segments intersect?
+        bool IntersectsRect(const Segment& s) const
         {
             return Left() <= s.Right()
                 && Right() >= s.Left()
@@ -206,6 +207,8 @@ namespace Day5
                     t = u;
                 if (t > len || t < 0)
                     return false;
+
+                // Two parallel segments can overlap along multiple points
                 lap.start = start.Offset(dir, t);
                 lap.len = min(o.len, len - t);
                 return true;
@@ -216,19 +219,34 @@ namespace Day5
                 if (dir.x == 0 || dir.y == 0)
                 {
                     // Simple horizontal & vertical
-                    if (!Intersects(o))
+                    if (!IntersectsRect(o))
                         return false;
+
+                    // Two non-parallel segments can overlap on at most 1 point
                     lap.dir.y = 1;
                     lap.len = 0;
                     lap.start.x = (dir.x == 0) ? start.x : o.start.x;
                     lap.start.y = (dir.y == 0) ? start.y : o.start.y;
                     return true;
                 }
+                else
+                {
+                    // This is the only case where IntersectsRect can be wrong
+                    int dx = (o.start.x - start.x) / dir.x;
+                    int dy = (o.start.y - start.y) / dir.y;
+                    if (!(dx & 0x1) || !(dy & 0x1))
+                        return false;
+                    // TODO
+                }
+            }
+            else
+            {
+                // Intersections at 45 or 135 degrees
+                // At most 1 point of intersection
+                if (!IntersectsRect(o))  // This works again
+                    return false;
                 // TODO
             }
-            
-            // Other
-            // TODO
 
             return false;
         }
@@ -259,7 +277,7 @@ namespace Day5
 
     size_t Part1()
     {
-        Data data(false);
+        Data data(false);  // only horizontals and verticals
 
         PointSet intersections;
         for (int i = 1; i < data.segments.size(); i++)
@@ -272,7 +290,13 @@ namespace Day5
 
     size_t Part2()
     {
-        Data data(true);
+        Data data(true);  // diagonals too
+
+        PointSet intersections;
+        for (int i = 1; i < data.segments.size(); i++)
+        {
+            data.segments[i].PushIntersections(intersections, data.segments.begin(), i);
+        }
 
         return 0;
     }
