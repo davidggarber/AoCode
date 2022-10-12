@@ -241,7 +241,8 @@ namespace Day5
                 // m != om, because lines aren't parallel
                 int b = start.y - m * start.x;
                 int ob = o.start.y - om * o.start.x;
-                // Find at what x they cross
+                // Given the Y-intercepts and the slopes, there is a single y where they meet.
+                // At what x does that happen?
                 // mx+b = omx+ob
                 // mx-omx = ob-b
                 int x = (ob - b) / (m - om);
@@ -250,7 +251,7 @@ namespace Day5
                 int u = (x - o.start.x) / o.dir.x;
                 if (t < 0 || t > len || u < 0 || u > o.len)
                     return false;
-                // Do they cross at the same y?
+                // Do those xs really map to the same y?
                 lap.start = start.Offset(dir, t);
                 Point p = o.start.Offset(o.dir, u);
                 return lap.start == p;
