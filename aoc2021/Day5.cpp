@@ -35,17 +35,6 @@ namespace Day5
             return *this;
         }
 
-        //Point() noexcept
-        //{
-        //    x = y = 0;
-        //}
-
-        //Point(const Point& p) noexcept
-        //{
-        //    x = p.x;
-        //    y = p.y;
-        //}
-
         bool operator==(const Point& p) const
         {
             return x == p.x && y == p.y;
@@ -122,9 +111,7 @@ namespace Day5
         Point start, dir;
         int len;  // zero is a point, negative is invalid
 
-        Segment() noexcept
-        {
-        }
+        Segment() = default;
 
         // Single-point segment
         Segment(int x, int y) noexcept
@@ -165,6 +152,9 @@ namespace Day5
             
             return true;
         }
+
+        // Find any intersections between one segment and all prior
+        // Add them to a set for unique tracking
         void PushIntersections(PointSet& intersections, vector<Segment>::iterator it, int count) const
         {
             for (int i = 0; i < count; i++, it++)
@@ -187,6 +177,9 @@ namespace Day5
                 && Bottom() >= s.Top();
         }
 
+        // Get the overlap between this segment and another.
+        // The result is a third segment (which can be a point or a segment)
+        // Return false if no overlap exists
         bool GetOverlap(const Segment& o, Segment& lap) const
         {
             // Always ask the left/upper segment about the lower/right one
@@ -213,42 +206,40 @@ namespace Day5
                 lap.len = min(o.len, len - t);
                 return true;
             }
-            if (dir == ~o.dir || ~dir == o.dir)
-            {
-                // Perpendicular
-                if (dir.x == 0 || dir.y == 0)
-                {
-                    // Simple horizontal & vertical
-                    if (!IntersectsRect(o))
-                        return false;
 
-                    // Two non-parallel segments can overlap on at most 1 point
-                    lap.dir.y = 1;
-                    lap.len = 0;
-                    lap.start.x = (dir.x == 0) ? start.x : o.start.x;
-                    lap.start.y = (dir.y == 0) ? start.y : o.start.y;
-                    return true;
-                }
-                else
-                {
-                    // This is the only case where IntersectsRect can be wrong
-                    int dx = (o.start.x - start.x) / dir.x;
-                    int dy = (o.start.y - start.y) / dir.y;
-                    if (!(dx & 0x1) || !(dy & 0x1))
-                        return false;
-                    // TODO
-                }
+            // Two non-parallel segments can overlap on at most 1 point
+            lap.dir.y = 1;
+            lap.len = 0;
+
+            // Parameterized linear algebra
+            // Rephrase our segment as x=(a+bt), y=(c+dt) at offset t
+            // Using e,f,g,h and u for the other segment, we get
+            // a+bt == e+fu && c+dt == g+hu
+            // Because the two segments aren't parellel, if b is zero, both f and d are not.
+            // (ditto with all similar combinations)
+            // Where b or f can be zero, but never both. Same with d and h.
+            // t = (e+fu-a)/b OR (g+hu-c)/d
+            // Then
+            // c+d(e+fu-a)/b == g+hu OR a+b(g+hu-c)/d == e+fu
+            // c+de/b+dfu/b-a/b == g+hu
+            // c+de/b-a/b-g == hu - dfu == u(h - df)
+            // u == (c+de/b-a/b-g)/(h-df)
+            if (dir.x != 0)
+            {
+                int u = (start.y + o.start.x * dir.y / dir.x - start.x / dir.x - o.dir.x) / (o.dir.y - dir.y * o.start.y);
+                if (u < 0 || u > o.len)
+                    return false;
+                lap.start = o.start.Offset(o.dir, u);
+                return true;
             }
             else
             {
-                // Intersections at 45 or 135 degrees
-                // At most 1 point of intersection
-                if (!IntersectsRect(o))  // This works again
+                int t = (o.start.y + start.x * o.dir.y / o.dir.x - o.start.x / o.dir.x - dir.x) / (dir.y - o.dir.y * start.y);
+                if (t < 0 || t > len)
                     return false;
-                // TODO
+                lap.start = start.Offset(dir, t);
+                return true;
             }
-
-            return false;
         }
     };
 
