@@ -1,0 +1,46 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
+#include <unordered_map>
+#include <vector>
+#include "Stopwatch.h"
+
+using namespace std;
+
+// https://adventofcode.com/2021/day/8
+namespace Day7
+{
+    auto data_file = "Data\\Day8.txt";
+
+    class Data
+    {
+    public:
+    };
+
+    double Part1()
+    {
+        Data data;
+    }
+
+    size_t Part2()
+    {
+        Data data;
+    }
+
+    /// <summary>
+    /// Run parts 1 and 2.
+    /// Time each of them.
+    /// </summary>
+    extern void Both()
+    {
+        {
+            Stats timer(7, 1);
+            cout << Part1() << "\n";
+        }
+        {
+            Stats timer(7, 2);
+            cout << Part2() << "\n";
+        }
+    }
+}
