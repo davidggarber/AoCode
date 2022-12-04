@@ -16,12 +16,25 @@ namespace Day4
     class Data
     {
     public:
+        int contain, overlap;
+
         Data()
         {
             ifstream file(FileFromNamespace(__FUNCSIG__));
+            contain = 0;
+            overlap = 0;
             if (file.is_open())
             {
-                string line;
+                while (!file.eof())
+                {
+                    int a, b, c, d;
+                    char comma, dash;
+                    file >> a >> dash >> b >> comma >> c >> dash >> d;
+                    if ((a >= c && b <= d) || (c >= a && d <= b))
+                        contain++;
+                    if (a <= d && b >= c)
+                        overlap++;
+                }
             }
         }
     };
@@ -29,13 +42,13 @@ namespace Day4
     size_t Part1()
     {
         Data data;
-        return 0;
+        return data.contain;
     }
 
     size_t Part2()
     {
         Data data;
-        return 0;
+        return data.overlap;
     }
 
     /// <summary>
