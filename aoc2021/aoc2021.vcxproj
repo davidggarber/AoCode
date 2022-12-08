@@ -130,6 +130,11 @@
   <ItemGroup>
     <ClCompile Include="aoc2021.cpp" />
     <ClCompile Include="Day1.cpp" />
+    <ClCompile Include="Day10.cpp" />
+    <ClCompile Include="Day12.cpp" />
+    <ClCompile Include="Day14.cpp" />
+    <ClCompile Include="Day15.cpp" />
+    <ClCompile Include="Day16.cpp" />
     <ClCompile Include="Day1a.cpp" />
     <ClCompile Include="Day1b.cpp" />
     <ClCompile Include="Day1c.cpp" />
@@ -141,6 +146,8 @@
     <ClCompile Include="Day7.cpp" />
     <ClCompile Include="Day8.cpp" />
     <ClCompile Include="Day9.cpp" />
+    <ClCompile Include="Day11.cpp" />
+    <ClCompile Include="Day13.cpp" />
     <ClCompile Include="Stopwatch.cpp" />
   </ItemGroup>
   <ItemGroup>
