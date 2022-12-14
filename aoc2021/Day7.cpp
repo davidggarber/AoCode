@@ -29,7 +29,7 @@ namespace Day7
                 while (!file.eof())
                 {
                     file >> d;
-                    sum += d;
+                    sum += (int)d;
                     pos.push_back(d);
                     auto f = map.find(d);
                     if (f == map.end())

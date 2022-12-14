@@ -125,11 +125,11 @@ namespace Day10
     extern void Both()
     {
         {
-            Stats timer(9, 1);
+            Stats timer(10, 1);
             cout << Part1() << "\n";
         }
         {
-            Stats timer(9, 2);
+            Stats timer(10, 2);
             cout << Part2() << "\n";
         }
     }
