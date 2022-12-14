@@ -53,4 +53,4 @@ namespace Day24
             cout << Part2() << "\n";
         }
     }
-}3
+}
