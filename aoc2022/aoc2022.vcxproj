@@ -130,7 +130,22 @@
   <ItemGroup>
     <ClCompile Include="aoc2022.cpp" />
     <ClCompile Include="Day1.cpp" />
+    <ClCompile Include="Day10.cpp" />
+    <ClCompile Include="Day11.cpp" />
+    <ClCompile Include="Day12.cpp" />
+    <ClCompile Include="Day13.cpp" />
+    <ClCompile Include="Day14.cpp" />
+    <ClCompile Include="Day15.cpp" />
+    <ClCompile Include="Day17.cpp" />
+    <ClCompile Include="Day18.cpp" />
+    <ClCompile Include="Day19.cpp" />
     <ClCompile Include="Day2.cpp" />
+    <ClCompile Include="Day20.cpp" />
+    <ClCompile Include="Day21.cpp" />
+    <ClCompile Include="Day22.cpp" />
+    <ClCompile Include="Day23.cpp" />
+    <ClCompile Include="Day24.cpp" />
+    <ClCompile Include="Day25.cpp" />
     <ClCompile Include="Day3.cpp" />
     <ClCompile Include="Day4.cpp" />
     <ClCompile Include="Day5.cpp" />
@@ -138,6 +153,7 @@
     <ClCompile Include="Day7.cpp" />
     <ClCompile Include="Day8.cpp" />
     <ClCompile Include="Day9.cpp" />
+    <ClCompile Include="Day16.cpp" />
     <ClCompile Include="Stopwatch.cpp" />
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>

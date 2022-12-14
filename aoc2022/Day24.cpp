@@ -10,8 +10,8 @@
 
 using namespace std;
 
-// https://adventofcode.com/2022/day/10
-namespace Day10
+// https://adventofcode.com/2022/day/24
+namespace Day24
 {
     class Data
     {
@@ -53,4 +53,4 @@ namespace Day10
             cout << Part2() << "\n";
         }
     }
-}
+}3

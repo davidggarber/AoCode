@@ -10,8 +10,8 @@
 
 using namespace std;
 
-// https://adventofcode.com/2022/day/10
-namespace Day10
+// https://adventofcode.com/2022/day/20
+namespace Day20
 {
     class Data
     {
