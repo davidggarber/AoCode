@@ -129,6 +129,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="aoc2022.cpp" />
+    <ClCompile Include="BigInt.cpp" />
     <ClCompile Include="Day1.cpp" />
     <ClCompile Include="Day10.cpp" />
     <ClCompile Include="Day11.cpp" />
@@ -154,10 +155,12 @@
     <ClCompile Include="Day8.cpp" />
     <ClCompile Include="Day9.cpp" />
     <ClCompile Include="Day16.cpp" />
+    <ClCompile Include="DgInt.cpp" />
     <ClCompile Include="Stopwatch.cpp" />
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BigInt.h" />
     <ClInclude Include="Stopwatch.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
