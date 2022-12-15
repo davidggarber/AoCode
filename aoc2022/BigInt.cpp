@@ -254,11 +254,10 @@ BigInt& operator%=(BigInt& a, const BigInt& b) {
 	if (Null(b))
 		throw("Arithmetic Error: Division By 0");
 	if (a < b) {
-		a = BigInt();
 		return a;
 	}
 	if (a == b) {
-		a = BigInt(1);
+		a = BigInt();  // zero
 		return a;
 	}
 	int i, lgcat = 0, cc;
