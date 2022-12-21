@@ -5,15 +5,15 @@
 class Point
 {
 public:
-	int x, y;
+	int64_t x, y;
 	Point()
 	{
 		x = y = 0;
 	}
-	Point(int r, int c)
+	Point(int64_t xx, int64_t yy)
 	{
-		y = r;
-		x = c;
+		x = xx;
+		y = yy;
 	}
 	Point(const Point& pt)
 	{
@@ -45,6 +45,10 @@ public:
 	{
 		Point delta(pt.y - y, pt.x - x);
 		return delta;
+	}
+	int64_t ManhattenDistance(const Point& pt) const
+	{
+		return abs(pt.x - x) + abs(pt.y - y);
 	}
 };
 

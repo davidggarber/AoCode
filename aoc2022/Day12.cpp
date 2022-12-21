@@ -53,10 +53,10 @@ namespace Day12
                     getline(file, line);
                     int s = line.find('S');
                     if (s < line.size())
-                        start = Point(map.size(), s);
+                        start = Point(s, map.size());
                     int e = line.find('E');
                     if (e < line.size())
-                        end = Point(map.size(), e);
+                        end = Point(e, map.size());
                     map.push_back(line);
                 }
             }
@@ -102,10 +102,10 @@ namespace Day12
             SetDistance(end, 0, 25);
 
             vector<Step> stack;
-            stack.push_back(Step(Point(end.y - 1, end.x), end));
-            stack.push_back(Step(Point(end.y + 1, end.x), end));
-            stack.push_back(Step(Point(end.y, end.x - 1), end));
-            stack.push_back(Step(Point(end.y, end.x + 1), end));
+            stack.push_back(Step(Point(end.x - 1, end.y), end));
+            stack.push_back(Step(Point(end.x + 1, end.y), end));
+            stack.push_back(Step(Point(end.x, end.y - 1), end));
+            stack.push_back(Step(Point(end.x, end.y + 1), end));
 
             while (stack.size() > 0)
             {
@@ -116,10 +116,10 @@ namespace Day12
                 int dist = distances[step.to] + 1;
                 if (SetDistance(pt, dist, minHeight))
                 {
-                    stack.push_back(Step(Point(pt.y - 1, pt.x), pt));
-                    stack.push_back(Step(Point(pt.y + 1, pt.x), pt));
-                    stack.push_back(Step(Point(pt.y, pt.x - 1), pt));
-                    stack.push_back(Step(Point(pt.y, pt.x + 1), pt));
+                    stack.push_back(Step(Point(pt.x - 1, pt.y), pt));
+                    stack.push_back(Step(Point(pt.x + 1, pt.y), pt));
+                    stack.push_back(Step(Point(pt.x, pt.y - 1), pt));
+                    stack.push_back(Step(Point(pt.x, pt.y + 1), pt));
                 }
             }
         }
