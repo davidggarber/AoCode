@@ -21,7 +21,11 @@ namespace Day13
             ifstream file(FileFromNamespace(__FUNCSIG__));
             if (file.is_open())
             {
-                string line;
+                while (!file.eof())
+                {
+                    string line;
+                    getline(file, line);
+                }
             }
         }
     };
