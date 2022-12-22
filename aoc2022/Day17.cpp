@@ -68,7 +68,7 @@ namespace Day17
                 for (int f = 0; f < 7; f++)
                     offsets.push_back(Point(f, 0));
                 size = Point(7, 1);
-                home.y = floor;
+                home = Point(1, floor);
                 break;
             }
             home.y -= size.y - 1;
@@ -108,9 +108,20 @@ namespace Day17
             {
                 for (auto rit = rock.offsets.begin(); rit != rock.offsets.end(); rit++)
                 {
-                    if (*it == *rit)
+                    if (home + *it == rock.home + *rit)
                         return true;
                 }
+            }
+            return false;
+        }
+
+        bool Intersects(vector<Rock>& tower)
+        {
+            for (auto it = tower.end(); it != tower.begin(); )
+            {
+                it--;
+                if (Intersects(*it))
+                    return true;
             }
             return false;
         }
@@ -145,6 +156,31 @@ namespace Day17
         }
     };
 
+    void Print(vector<Rock>& tower, int top)
+    {
+        vector<string> raster;
+        for (int i = top; i <= 0; i++)
+        {
+            raster.push_back("|.......|");
+        }
+        for (auto it = tower.begin(); it != tower.end(); it++)
+        {
+            for (auto oit = it->offsets.begin(); oit != it->offsets.end(); oit++)
+            {
+                Point pt = it->home + *oit;
+                string s = raster[pt.y - top];
+                s = s.substr(0, pt.x) + '#' + s.substr(pt.x + 1);
+                raster[pt.y - top] = s;
+            }
+        }
+        raster.pop_back();
+        raster.push_back("+-------+");
+        for (auto rit = raster.begin(); rit != raster.end(); rit++)
+        {
+            cout << *rit << "\n";
+        }
+    }
+
     size_t Part1()
     {
         Data data;
@@ -157,34 +193,80 @@ namespace Day17
         {
             Rock rock(data.shape_sequence[r % 5], top);
             bool stop = false;
+            int free = 3;
             while (!stop)
             {
                 int gasX = data.gas_sequence[g % data.gas_sequence.size()] == '>' ? 1 : -1;
                 g++;
-                rock.Blow(gasX, 0, 8);
-                rock.home.y++;
-                for (auto it = tower.end(); it != tower.begin(); )
+                if (rock.Blow(gasX, 0, 8))
                 {
-                    it--;
-                    if (rock.Intersects(*it))
-                    {
-                        rock.home.y--;
-                        stop = true;
-                        break;
-                    }
+                    if (rock.Intersects(tower))
+                        rock.Blow(-gasX, 0, 8);
+                }
+                rock.home.y++;
+                if (--free < 0 &&  rock.Intersects(tower))
+                {
+                    rock.home.y--;
+                    stop = true;
+                    break;
                 }
             }
             tower.push_back(rock);
             if (rock.home.y < top)
                 top = rock.home.y;
+            //Print(tower, top);
         }
         return -top;
     }
 
-    size_t Part2()
+    int64_t Part2()
     {
         Data data;
-        return 0;
+        vector<Rock> tower;
+        tower.push_back(Rock('_', 0));
+
+        int64_t top = 0;
+        int ir = 0;
+        int g = 0;
+
+        // IDEA: every time ir == 0 && g == 0, make a scan of the top of the tower.
+        // Cache that. Then when the next full loop is done, associate before -> after, plus height increase
+        // Any time we see that pattern again, we can fast forward
+
+        for (size_t r = 0; r < 2022; r++)  // 1000000000000UL
+        {
+            Rock rock(data.shape_sequence[ir], top);
+            ir = (ir + 1) % 5;
+            bool stop = false;
+            while (!stop)
+            {
+                int gasX = data.gas_sequence[g % data.gas_sequence.size()] == '>' ? 1 : -1;
+                g = (g + 1) % data.gas_sequence.size();
+                if (rock.Blow(gasX, 0, 8))
+                {
+                    if (rock.Intersects(tower))
+                        rock.Blow(-gasX, 0, 8);
+                }
+                rock.home.y++;
+                if (rock.Intersects(tower))
+                {
+                    rock.home.y--;
+                    stop = true;
+                    break;
+                }
+            }
+
+            // IDEA: insert sorted
+            tower.push_back(rock);
+            if (rock.home.y < top)
+                top = rock.home.y;
+
+            // IDEA: check for completed rows
+            // then purge all rocks whose home is below that row
+
+            //Print(tower, top);
+        }
+        return -top;
     }
 
     /// <summary>
