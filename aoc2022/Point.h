@@ -41,11 +41,60 @@ public:
 		y += pt.y;
 		return *this;
 	}
+	Point operator+(const Point& pt) const
+	{
+		Point sum(pt.x + x, pt.y + y);
+		return sum;
+	}
 	Point operator-(const Point& pt) const
 	{
-		Point delta(pt.y - y, pt.x - x);
+		Point delta(pt.x - x, pt.y - y);
 		return delta;
 	}
+	Point operator*(int k) const
+	{
+		Point sum(x * k, y * k);
+		return sum;
+	}
+	Point operator/(int k) const
+	{
+		Point delta(x / k, y / k);
+		return delta;
+	}
+	Point operator%(int k) const
+	{
+		Point delta(x % k, y % k);
+		return delta;
+	}
+	Point BoxRotate(int turns, int max) const
+	{
+		// Rotate within the box (0,0)-(max,max), inclusive
+		// max MUST be positive
+		turns %= 4;
+		if (turns == 1 || turns == -3)
+			return Point(max - y, x);  // right turn
+		if (turns == 3 || turns == -1)
+			return Point(y, max - x);  // left turn
+		if (turns == 2 || turns == -2)
+			return Point(max - x, max - y);  // U-turn
+		return *this;  // no-op
+	}
+	Point operator>>(int turns) const
+	{
+		turns %= 4;
+		if (turns == 1 || turns == -3)
+			return Point(-y, x);  // right turn
+		if (turns == 3 || turns == -1)
+			return Point(y, -x);  // left turn
+		if (turns == 2 || turns == -2)
+			return Point(-x, -y);  // U-turn
+		return *this;  // no-op
+	}
+	Point operator<<(int turns) const
+	{
+		return operator>>(4 - turns);
+	}
+
 	int64_t ManhattenDistance(const Point& pt) const
 	{
 		return abs(pt.x - x) + abs(pt.y - y);
