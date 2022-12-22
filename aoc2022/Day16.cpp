@@ -11,6 +11,9 @@
 
 using namespace std;
 
+#define MAX_STEPS 30
+#define TRACE_FREQ 1
+
 // https://adventofcode.com/2022/day/16
 namespace Day16
 {
@@ -27,6 +30,11 @@ namespace Day16
             rate = v.rate;
             tunnels = v.tunnels;
             return *this;
+        }
+
+        bool IsDeadEnd()
+        {
+            return tunnels.size() == 1;
         }
     };
 
@@ -103,24 +111,28 @@ namespace Day16
         vector<string> path;
         unordered_set<string> open;
         unordered_set<string> finished;
+        unordered_set<string> visited;
         long flow_per_minute;
         long total_flow;
 
-        Route(Data& data, vector<Branch>& branches)
+        Route(Data& data, vector<Branch>& branches, bool trace)
         {
             auto it = branches.begin();
             path.push_back(it->Current());
-            for (it++; it != branches.end(); it++)
-                Continue(data, it->Current());
 
-            if (branches.size() == 30)
+            if (trace)
+                Trace(data, *it);
+
+            for (it++; it != branches.end(); it++)
             {
-                for (it = branches.begin(); it != branches.end(); it++)
-                    cout << it->Current() << "(" << (it->Remaining()) << ") ";
-                cout << "\n";
+                if (trace)
+                    Trace(data, *it);
+                Continue(data, it->Current());
             }
+            if (trace)
+                cout << " ==> " << total_flow << " @ " << flow_per_minute << "\n";
         }
-        
+
         Route(string start)
         {
             path.push_back(start);
@@ -154,9 +166,26 @@ namespace Day16
             return path.back();
         }
 
+        void Trace(Data& data, Branch& br)
+        {
+            string f = br.Current();
+            if (f == "~")
+                cout << "~" << Current()[0];
+            else if (f == "." || !IsOpen(data, f))
+                cout << f;
+            else
+                cout << (char)tolower(f[0]);
+            cout << "(" << br.Remaining() << ") ";
+        }
+
+        bool IsOpen(Data& data, string name)
+        {
+            return data.valves[name]->rate == 0 || open.find(name) != open.end();
+        }
+
         bool IsOpen(Data& data)
         {
-            return data.valves[Current()]->rate == 0 || open.find(Current()) != open.end();
+            return IsOpen(data, Current());
         }
 
         bool IsFinished(string tunnel)
@@ -171,6 +200,11 @@ namespace Day16
                 options.push_back("~");  // Special code means open
             for (auto it = data.valves[Current()]->tunnels.begin(); it != data.valves[Current()]->tunnels.end(); it++)
             {
+                // Don't return to a tunnel having changed nothing
+                string status = *it + to_string(flow_per_minute);
+                if (visited.find(status) != visited.end())
+                    continue;
+
                 // Don't go to tunnels we can't improve
                 // Also don't turn around and go back where we just came from if we didn't do anything interesting
                 if (!IsFinished(*it) && *it != prev)
@@ -203,6 +237,8 @@ namespace Day16
                 }
                 path.push_back(dest);
             }
+            string status = Current() + to_string(flow_per_minute);
+            visited.insert(status);
         }
 
         Route Continue(Data& data, vector<string>& options, int index)
@@ -244,10 +280,18 @@ namespace Day16
         vector<Branch> stack;
         stack.push_back(Branch(start));
 
+        int tracer = 0;
+
         while (stack.size() > 0)
         {
-            Route r(data, stack);
-            if (stack.size() < 30)
+            bool trace = stack.size() == MAX_STEPS + 1;
+            if (trace)
+            {
+                trace &= (++tracer % TRACE_FREQ) == 0;
+            }
+
+            Route r(data, stack, false);
+            if (stack.size() < MAX_STEPS + 1) // Initial AA doesn't count
             {
                 string prev = stack.size() <= 1 ? "" : stack[stack.size() - 2].Current();
                 vector<string> options = r.Options(data, prev);  // Always at least 1 (sit)
@@ -255,7 +299,11 @@ namespace Day16
             }
             else
             {
-                best = max(best, r.total_flow);
+                if (r.total_flow > best)
+                {
+                    Route rr(data, stack, true);
+                    best = r.total_flow;
+                }
                 stack.pop_back();
                 while (stack.size() > 0 && !stack.back().Next())
                 {

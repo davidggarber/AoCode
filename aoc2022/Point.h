@@ -46,20 +46,44 @@ public:
 		Point sum(pt.x + x, pt.y + y);
 		return sum;
 	}
+	const Point& operator-=(const Point& pt)
+	{
+		x -= pt.x;
+		y -= pt.y;
+		return *this;
+	}
 	Point operator-(const Point& pt) const
 	{
 		Point delta(pt.x - x, pt.y - y);
 		return delta;
+	}
+	const Point& operator*=(int k)
+	{
+		x *= k;
+		y *= k;
+		return *this;
 	}
 	Point operator*(int k) const
 	{
 		Point sum(x * k, y * k);
 		return sum;
 	}
+	const Point& operator/=(int k)
+	{
+		x /= k;
+		y /= k;
+		return *this;
+	}
 	Point operator/(int k) const
 	{
 		Point delta(x / k, y / k);
 		return delta;
+	}
+	const Point& operator%=(int k)
+	{
+		x %= k;
+		y %= k;
+		return *this;
 	}
 	Point operator%(int k) const
 	{
@@ -93,6 +117,32 @@ public:
 	Point operator<<(int turns) const
 	{
 		return operator>>(4 - turns);
+	}
+	const Point& operator>>=(int turns)
+	{
+		auto xx = x, yy = y;
+		turns %= 4;
+		if (turns == 1 || turns == -3)
+		{
+			x = -yy;  // right turn
+			y = xx;
+		}
+		else if (turns == 3 || turns == -1)
+		{
+			x = yy;  // left turn
+			y = -xx;
+		}
+		else if (turns == 2 || turns == -2)
+		{
+			x = -xx;  // U-turn
+			y = -yy;
+		}
+		// else no-op
+		return *this;
+	}
+	const Point& operator<<=(int turns)
+	{
+		return operator>>=(4 - turns);
 	}
 
 	int64_t ManhattenDistance(const Point& pt) const
