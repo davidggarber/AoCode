@@ -165,6 +165,20 @@ public:
 		return r -= pt;
 	}
 
+	void Expand(const Point& dirs)
+	{
+		left -= dirs.x;
+		width += dirs.x * 2;
+		top -= dirs.y;
+		height += dirs.y * 2;
+	}
+
+	bool Contains(const Point& pt) const
+	{
+		return pt.x >= left && pt.x < Right()
+			&& pt.y >= top && pt.y < Bottom();
+	}
+
 	int64_t Area() const
 	{
 		return width * height;
@@ -176,6 +190,9 @@ struct std::hash<Rect>
 {
 	size_t operator()(const Rect& r) const noexcept
 	{
-		return (size_t)(r.left * 1000000 + r.top * 10000 + r.width * 100 + r.height);
+		return (size_t)(r.left << 48
+			^ r.top << 32
+			^ r.width << 16
+			^ r.height);
 	}
 };
