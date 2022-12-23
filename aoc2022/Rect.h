@@ -7,12 +7,12 @@ class Rect
 {
 public:
 	int64_t left, top;
-	uint64_t width, height;
+	int64_t width, height;
 	Rect()
 	{
 		left, top, width, height = 0;
 	}
-	Rect(int64_t ll, int64_t tt, uint64_t ww, uint64_t hh)
+	Rect(int64_t ll, int64_t tt, int64_t ww, int64_t hh)
 	{
 		left = ll;
 		top = tt;
@@ -44,6 +44,10 @@ public:
 	bool operator==(const Rect& rc) const
 	{
 		return left == rc.left && top == rc.top && width == rc.width && height == rc.height;
+	}
+	bool operator!=(const Rect& rc) const
+	{
+		return !operator==(rc);
 	}
 	int64_t Right() const
 	{
@@ -83,20 +87,43 @@ public:
 	}
 	const Rect& operator|=(const Point& pt)  // union
 	{
-		int64_t ll = std::min(left, pt.x);
-		int64_t tt = std::min(top, pt.y);
-		int64_t rr = std::max(Right(), pt.x);
-		int64_t bb = std::max(Bottom(), pt.y);
-		left = ll;
-		top = tt;
-		width = rr - ll;
-		height = bb - tt;
+		if (IsEmpty())
+		{
+			left = pt.x;
+			top = pt.y;
+			width = height = 1;
+		}
+		else
+		{
+			int64_t ll = std::min(left, pt.x);
+			int64_t tt = std::min(top, pt.y);
+			int64_t rr = std::max(Right(), pt.x + 1);
+			int64_t bb = std::max(Bottom(), pt.y + 1);
+			left = ll;
+			top = tt;
+			width = rr - ll;
+			height = bb - tt;
+		}
 		return *this;
 	}
 	Rect operator|(const Point& pt) const
 	{
 		Rect u = *this;
 		return u |= pt;
+	}
+	bool Intersects(const Rect& rc) const
+	{
+		return left < rc.Right()
+			&& Right() > rc.left
+			&& top < rc.Bottom()
+			&& Bottom() > rc.top;
+	}
+	bool Intersects(int64_t ll, int64_t tt, int64_t ww, int64_t hh) const
+	{
+		return left < (ll + ww)
+			&& Right() > ll
+			&& top < (tt + hh)
+			&& Bottom() > tt;
 	}
 	const Rect& operator&=(const Rect& rc)  // intersection
 	{
@@ -138,7 +165,7 @@ public:
 		return r -= pt;
 	}
 
-	uint64_t Area() const
+	int64_t Area() const
 	{
 		return width * height;
 	}

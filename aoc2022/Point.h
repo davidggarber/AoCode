@@ -30,6 +30,10 @@ public:
 	{
 		return x == pt.x && y == pt.y;
 	}
+	bool operator!=(const Point& pt) const
+	{
+		return !operator==(pt);
+	}
 	bool operator<(const Point& pt) const
 	{
 		return y < pt.y
