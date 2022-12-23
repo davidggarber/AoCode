@@ -1,4 +1,4 @@
-#define DAY Day18
+#define DAY Day19
 
 // To simplify the code organization, each day only as a cpp file, not a .h file.
 // So we have to import it via "extern".
