@@ -18,103 +18,89 @@ namespace Day17
     class Rock
     {
     public:
-        Point home;
-        Point size;
-        vector<Point> offsets;
-        
-        Rock(char shape, int floor)
+        Point home;  // bottom-left of shape
+        char shape;
+
+        Rock(char shp, int floor)
             : home(3, floor - 4)
+            , shape(shp)
         {
-            switch (shape)
-            {
-            case '-':
-                offsets.push_back(Point(0, 0));
-                offsets.push_back(Point(1, 0));
-                offsets.push_back(Point(2, 0));
-                offsets.push_back(Point(3, 0));
-                size = Point(4, 1);
-                break;
-            case '+':
-                offsets.push_back(Point(1, 0));
-                offsets.push_back(Point(0, 1));
-                offsets.push_back(Point(1, 1));
-                offsets.push_back(Point(2, 1));
-                offsets.push_back(Point(1, 2));
-                size = Point(3, 3);
-                break;
-            case 'L':
-                offsets.push_back(Point(2, 0));
-                offsets.push_back(Point(2, 1));
-                offsets.push_back(Point(2, 2));
-                offsets.push_back(Point(0, 2));
-                offsets.push_back(Point(1, 2));
-                size = Point(3, 3);
-                break;
-            case '|':
-                offsets.push_back(Point(0, 0));
-                offsets.push_back(Point(0, 1));
-                offsets.push_back(Point(0, 2));
-                offsets.push_back(Point(0, 3));
-                size = Point(1, 4);
-                break;
-            case '*':
-                offsets.push_back(Point(0, 0));
-                offsets.push_back(Point(1, 0));
-                offsets.push_back(Point(0, 1));
-                offsets.push_back(Point(1, 1));
-                size = Point(2, 2);
-                break;
-            case '_':  // Actual floor
-                for (int f = 0; f < 7; f++)
-                    offsets.push_back(Point(f, 0));
-                size = Point(7, 1);
-                home = Point(1, floor);
-                break;
-            }
-            home.y -= size.y - 1;
         }
 
         Rock(const Rock& r)
         {
             home = r.home;
-            size = r.size;
-            offsets = r.offsets;
+            shape = r.shape;
         }
 
         const Rock& operator=(const Rock& r)
         {
             home = r.home;
-            size = r.size;
-            offsets = r.offsets;
+            shape = r.shape;
             return *this;
         }
 
-        Rect Bounding() const
+        int64_t Top() const
         {
-            //Point far = home;
-            //for (auto it = offsets.begin(); it != offsets.end(); it++)
-            //{
-            //    far.x = max(far.x, it->x);
-            //    far.y = max(far.y, it->y);
-            //}
-            return Rect(home, home + size);
-        }
-        
-        bool Intersects(const Rock& rock)
-        {
-            if ((Bounding() & rock.Bounding()).IsEmpty())
-                return false;
-            for (auto it = offsets.begin(); it != offsets.end(); it++)
+            switch (shape)
             {
-                for (auto rit = rock.offsets.begin(); rit != rock.offsets.end(); rit++)
-                {
-                    if (home + *it == rock.home + *rit)
-                        return true;
-                }
+            case '|':
+                return home.y - 3;
+            case '*':
+                return home.y - 1;
+            case '+':
+            case 'L':
+                return home.y - 2;
+            }
+            return home.y;
+        }
+
+        bool Intersects(const Rect& rect) const
+        {
+            switch (shape)
+            {
+            case '_':
+                return rect.Intersects(0, 0, 7, 1);
+            case '-':
+                return rect.Intersects(home.x, home.y, 4, 1);
+            case '|':
+                return rect.Intersects(home.x, home.y - 3, 1, 4);
+            case '*':
+                return rect.Intersects(home.x, home.y - 1, 2, 2);
+            case '+':
+                return rect.Intersects(home.x + 1, home.y - 2, 1, 3)
+                    || rect.Intersects(home.x, home.y - 1, 3, 1);
+            case 'L':
+                return rect.Intersects(home.x, home.y, 3, 1)
+                    || rect.Intersects(home.x + 2, home.y - 2, 1, 2);
             }
             return false;
         }
 
+        bool Intersects(const Rock& rock) const
+        {
+            switch (shape)
+            {
+            case '_':
+                return rock.Intersects(Rect(0, 0, 7, 1));
+            case '-':
+                return rock.Intersects(Rect(home.x, home.y, 4, 1));
+            case '|':
+                return rock.Intersects(Rect(home.x, home.y - 3, 1, 4));
+            case '*':
+                return rock.Intersects(Rect(home.x, home.y - 1, 2, 2));
+            case '+':
+                return rock.Intersects(Rect(home.x + 1, home.y - 2, 1, 3))
+                    || rock.Intersects(Rect(home.x, home.y - 1, 3, 1));
+            case 'L':
+                return rock.Intersects(Rect(home.x, home.y, 3, 1))
+                    || rock.Intersects(Rect(home.x + 2, home.y - 2, 1, 2));
+            }
+            return false;
+        }
+
+        // Only call when chances of intersection are high
+        // Always highest at the end
         bool Intersects(vector<Rock>& tower)
         {
             for (auto it = tower.end(); it != tower.begin(); )
@@ -126,15 +112,72 @@ namespace Day17
             return false;
         }
 
-        bool Blow(int dx, int64_t leftWall, int64_t rightWall)
+        bool IntersectsWall() const
         {
-            Rect b = Bounding();
-            if (b.left + dx > leftWall && b.Right() + dx <= rightWall)
+            // Walls are at X = 0 and X = 8
+            switch (shape)
             {
-                home.x += dx;
-                return true;
+            case '-':
+                return home.x < 1 || home.x > 4;
+            case '|':
+                return home.x < 1 || home.x > 7;
+            case '*':
+                return home.x < 1 || home.x > 6;
+            case '+':
+                return home.x < 1 || home.x > 5;
+            case 'L':
+                return home.x < 1 || home.x > 5;
             }
             return false;
+        }
+
+        bool Blow(int dx)
+        {
+            home.x += dx;
+            if (IntersectsWall())
+            {
+                home.x -= dx;
+                return false;
+            }
+            return true;
+        }
+
+        static string Replace(string src, int x, string ins)
+        {
+            return src.substr(0, x) + ins + src.substr(x + ins.size());
+        }
+
+        void Paint(vector<string>& raster, int y) const
+        {
+            switch (shape)
+            {
+            case '-':
+                raster[y] = Replace(raster[y], home.x, "####");
+                break;
+            case '|':
+                raster[y-3] = Replace(raster[y-3], home.x, "#");
+                raster[y - 2] = Replace(raster[y - 2], home.x, "#");
+                raster[y - 1] = Replace(raster[y - 1], home.x, "#");
+                raster[y] = Replace(raster[y], home.x, "#");
+                break;
+            case '*':
+                raster[y - 1] = Replace(raster[y - 1], home.x, "##");
+                raster[y] = Replace(raster[y], home.x, "##");
+                break;
+            case '+':
+                raster[y - 2] = Replace(raster[y - 2], home.x + 1, "#");
+                raster[y - 1] = Replace(raster[y - 1], home.x, "###");
+                raster[y] = Replace(raster[y], home.x + 1, "#");
+                break;
+            case 'L':
+                raster[y - 2] = Replace(raster[y - 2], home.x + 2, "#");
+                raster[y - 1] = Replace(raster[y - 1], home.x + 2, "#");
+                raster[y] = Replace(raster[y], home.x + 1, "###");
+                break;
+            case '_':
+                raster[y] = "+-------+";
+                break;
+            }
         }
     };
 
@@ -156,25 +199,20 @@ namespace Day17
         }
     };
 
-    void Print(vector<Rock>& tower, int top)
+    void Print(vector<Rock>& tower, int top, int rows)
     {
         vector<string> raster;
-        for (int i = top; i <= 0; i++)
+        int bottom = min(top + rows, 0);
+        for (int i = top; i <= bottom; i++)
         {
             raster.push_back("|.......|");
         }
         for (auto it = tower.begin(); it != tower.end(); it++)
         {
-            for (auto oit = it->offsets.begin(); oit != it->offsets.end(); oit++)
-            {
-                Point pt = it->home + *oit;
-                string s = raster[pt.y - top];
-                s = s.substr(0, pt.x) + '#' + s.substr(pt.x + 1);
-                raster[pt.y - top] = s;
-            }
+            if (it->home.y > bottom)
+                break;
+            it->Paint(raster, it->home.y - top);
         }
-        raster.pop_back();
-        raster.push_back("+-------+");
         for (auto rit = raster.begin(); rit != raster.end(); rit++)
         {
             cout << *rit << "\n";
@@ -198,10 +236,10 @@ namespace Day17
             {
                 int gasX = data.gas_sequence[g % data.gas_sequence.size()] == '>' ? 1 : -1;
                 g++;
-                if (rock.Blow(gasX, 0, 8))
+                if (rock.Blow(gasX))
                 {
-                    if (rock.Intersects(tower))
-                        rock.Blow(-gasX, 0, 8);
+                    if (free < 0 && rock.Intersects(tower))
+                        rock.home.x -= gasX;
                 }
                 rock.home.y++;
                 if (--free < 0 &&  rock.Intersects(tower))
@@ -212,9 +250,9 @@ namespace Day17
                 }
             }
             tower.push_back(rock);
-            if (rock.home.y < top)
-                top = rock.home.y;
-            //Print(tower, top);
+            if (rock.Top() < top)
+                top = rock.Top();
+            Print(tower, top, 50);
         }
         return -top;
     }
@@ -233,22 +271,25 @@ namespace Day17
         // Cache that. Then when the next full loop is done, associate before -> after, plus height increase
         // Any time we see that pattern again, we can fast forward
 
-        for (size_t r = 0; r < 2022; r++)  // 1000000000000UL
+        for (size_t r = 0; r < 2022000; r++)  // 1000000000000UL
         {
             Rock rock(data.shape_sequence[ir], top);
             ir = (ir + 1) % 5;
             bool stop = false;
+            int64_t free = 3;
             while (!stop)
             {
                 int gasX = data.gas_sequence[g % data.gas_sequence.size()] == '>' ? 1 : -1;
                 g = (g + 1) % data.gas_sequence.size();
-                if (rock.Blow(gasX, 0, 8))
+                if (g == 0)
+                    Print(tower, top, 50);
+                if (rock.Blow(gasX))
                 {
-                    if (rock.Intersects(tower))
-                        rock.Blow(-gasX, 0, 8);
+                    if (free < 0 && rock.Intersects(tower))
+                        rock.home.x -= gasX;
                 }
                 rock.home.y++;
-                if (rock.Intersects(tower))
+                if (--free < 0 && rock.Intersects(tower))
                 {
                     rock.home.y--;
                     stop = true;
@@ -258,13 +299,13 @@ namespace Day17
 
             // IDEA: insert sorted
             tower.push_back(rock);
-            if (rock.home.y < top)
-                top = rock.home.y;
+            if (rock.Top() < top)
+                top = rock.Top();
 
             // IDEA: check for completed rows
             // then purge all rocks whose home is below that row
 
-            //Print(tower, top);
+            Print(tower, top, 50);
         }
         return -top;
     }
