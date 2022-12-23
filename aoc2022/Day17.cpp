@@ -25,6 +25,8 @@ namespace Day17
             : home(3, floor - 4)
             , shape(shp)
         {
+            if (shape == '_')
+                home.y = 0;
         }
 
         Rock(const Rock& r)
@@ -147,32 +149,32 @@ namespace Day17
             return src.substr(0, x) + ins + src.substr(x + ins.size());
         }
 
-        void Paint(vector<string>& raster, int y) const
+        void Paint(vector<string>& raster, int y, bool newest) const
         {
             switch (shape)
             {
             case '-':
-                raster[y] = Replace(raster[y], home.x, "####");
+                raster[y] = Replace(raster[y], home.x, newest ? "@@@@" : "####");
                 break;
             case '|':
-                raster[y-3] = Replace(raster[y-3], home.x, "#");
-                raster[y - 2] = Replace(raster[y - 2], home.x, "#");
-                raster[y - 1] = Replace(raster[y - 1], home.x, "#");
-                raster[y] = Replace(raster[y], home.x, "#");
+                raster[y-3] = Replace(raster[y-3], home.x, newest ? "@" : "#");
+                raster[y - 2] = Replace(raster[y - 2], home.x, newest ? "@" : "#");
+                raster[y - 1] = Replace(raster[y - 1], home.x, newest ? "@" : "#");
+                raster[y] = Replace(raster[y], home.x, newest ? "@" : "#");
                 break;
             case '*':
-                raster[y - 1] = Replace(raster[y - 1], home.x, "##");
-                raster[y] = Replace(raster[y], home.x, "##");
+                raster[y - 1] = Replace(raster[y - 1], home.x, newest ? "@@" : "##");
+                raster[y] = Replace(raster[y], home.x, newest ? "@@" : "##");
                 break;
             case '+':
-                raster[y - 2] = Replace(raster[y - 2], home.x + 1, "#");
-                raster[y - 1] = Replace(raster[y - 1], home.x, "###");
-                raster[y] = Replace(raster[y], home.x + 1, "#");
+                raster[y - 2] = Replace(raster[y - 2], home.x + 1, newest ? "@" : "#");
+                raster[y - 1] = Replace(raster[y - 1], home.x, newest ? "@@@" : "###");
+                raster[y] = Replace(raster[y], home.x + 1, newest ? "@" : "#");
                 break;
             case 'L':
-                raster[y - 2] = Replace(raster[y - 2], home.x + 2, "#");
-                raster[y - 1] = Replace(raster[y - 1], home.x + 2, "#");
-                raster[y] = Replace(raster[y], home.x + 1, "###");
+                raster[y - 2] = Replace(raster[y - 2], home.x + 2, newest ? "@" : "#");
+                raster[y - 1] = Replace(raster[y - 1], home.x + 2, newest ? "@" : "#");
+                raster[y] = Replace(raster[y], home.x, newest ? "@@@" : "###");
                 break;
             case '_':
                 raster[y] = "+-------+";
@@ -199,23 +201,31 @@ namespace Day17
         }
     };
 
-    void Print(vector<Rock>& tower, int top, int rows)
+    void Print(vector<Rock>& tower, int64_t top, int64_t rows)
     {
         vector<string> raster;
-        int bottom = min(top + rows, 0);
+        int bottom = top + rows;
+        if (bottom > 0)
+            bottom = 0;
         for (int i = top; i <= bottom; i++)
         {
             raster.push_back("|.......|");
         }
-        for (auto it = tower.begin(); it != tower.end(); it++)
+        bool newest = true;
+        for (auto it = tower.end(); it != tower.begin(); )
         {
+            it--;
             if (it->home.y > bottom)
                 break;
-            it->Paint(raster, it->home.y - top);
+            it->Paint(raster, it->home.y - top, newest);
+            newest = false;
         }
+
+        cout << "\n" << (tower.size() - 1) << " rocks\n";
+        int row = top;
         for (auto rit = raster.begin(); rit != raster.end(); rit++)
         {
-            cout << *rit << "\n";
+            cout << *rit << " " << (row++) << "\n";
         }
     }
 
@@ -252,8 +262,11 @@ namespace Day17
             tower.push_back(rock);
             if (rock.Top() < top)
                 top = rock.Top();
-            Print(tower, top, 50);
+
+            //if (r <= 10)
+            //    Print(tower, top, 50);
         }
+        //Print(tower, top, 50);
         return -top;
     }
 
@@ -267,11 +280,14 @@ namespace Day17
         int ir = 0;
         int g = 0;
 
-        // IDEA: every time ir == 0 && g == 0, make a scan of the top of the tower.
-        // Cache that. Then when the next full loop is done, associate before -> after, plus height increase
-        // Any time we see that pattern again, we can fast forward
+        size_t firstCycle_rocks = 0;
+        int64_t firstCycle_top = 0;
+        size_t eachCycle_rocks = 0;
+        int64_t eachCycle_top = 0;
+        int64_t skiped_levels = 0;
 
-        for (size_t r = 0; r < 2022000; r++)  // 1000000000000UL
+        size_t total_rocks = 1000000000000UL;
+        for (size_t r = 0; r < total_rocks; r++)
         {
             Rock rock(data.shape_sequence[ir], top);
             ir = (ir + 1) % 5;
@@ -282,7 +298,24 @@ namespace Day17
                 int gasX = data.gas_sequence[g % data.gas_sequence.size()] == '>' ? 1 : -1;
                 g = (g + 1) % data.gas_sequence.size();
                 if (g == 0)
-                    Print(tower, top, 50);
+                {
+                    Print(tower, top, 30);
+                    size_t cur_rocks = tower.size() - 1;
+                    if (firstCycle_rocks == 0)
+                    {
+                        firstCycle_rocks = cur_rocks;
+                        firstCycle_top = top;
+                    }
+                    else if (eachCycle_rocks == 0)
+                    {
+                        eachCycle_rocks = cur_rocks - firstCycle_rocks;
+                        eachCycle_top = top - firstCycle_top;
+
+                        size_t skipCycles = (total_rocks - cur_rocks) / eachCycle_rocks;
+                        r += skipCycles * eachCycle_rocks;
+                        skiped_levels = skipCycles * eachCycle_top;
+                    }
+                }
                 if (rock.Blow(gasX))
                 {
                     if (free < 0 && rock.Intersects(tower))
@@ -297,17 +330,11 @@ namespace Day17
                 }
             }
 
-            // IDEA: insert sorted
             tower.push_back(rock);
             if (rock.Top() < top)
                 top = rock.Top();
-
-            // IDEA: check for completed rows
-            // then purge all rocks whose home is below that row
-
-            Print(tower, top, 50);
         }
-        return -top;
+        return -(top + skiped_levels);
     }
 
     /// <summary>
