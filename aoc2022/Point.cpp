@@ -1,6 +1,8 @@
 #include "Point.h"
 
 // Construct static unit axis vectors
+Point Point::ZERO(0, 0);
+
 Point Point::WEST(-1, 0);
 Point Point::EAST(1, 0);
 Point Point::NORTH(0, -1);

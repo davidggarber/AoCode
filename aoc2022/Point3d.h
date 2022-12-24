@@ -109,7 +109,7 @@ public:
 		return abs(pt.x - x) + abs(pt.y - y) + abs(pt.z - z);
 	}
 
-	static Point3d WEST, EAST, NORTH, SOUTH, UP, DOWN;
+	static Point3d ZERO, WEST, EAST, NORTH, SOUTH, UP, DOWN;
 };
 
 template<>

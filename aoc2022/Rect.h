@@ -179,6 +179,12 @@ public:
 			&& pt.y >= top && pt.y < Bottom();
 	}
 
+	Point Wrap(const Point& pt) const
+	{
+		return Point(((((pt.x - left) % width) + width) % width) + left,
+			((((pt.y - top) % height) + height) % height) + top);
+	}
+
 	int64_t Area() const
 	{
 		return width * height;

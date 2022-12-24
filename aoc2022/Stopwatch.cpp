@@ -20,7 +20,9 @@ double Stopwatch::Mark(bool restart)
     if (restart)
         _start = finish;  // Move start time to now, if asked
     // Return the ellapsed time in milliseconds
-    return std::chrono::duration_cast<std::chrono::nanoseconds>(delta).count() / 1000000.0;
+    long ms = std::chrono::duration_cast<std::chrono::nanoseconds>(delta).count() / 1000000;
+    return ms / 1000.0;  // seconds, with 3 decimals
+    //return std::chrono::duration_cast<std::chrono::nanoseconds>(delta).count() / 1000000.0;
 }
 
 Stats::Stats(std::string nmsp, int part)
@@ -33,7 +35,7 @@ Stats::~Stats()
 {
     // At the end of each part, report the stats
     std::cout << _nmsp << ", part " << _part
-        << " : " << Mark() << "ms; " 
+        << " : " << Mark() << "s; " 
         << MeasureMemory() << "mb\n";
 }
 

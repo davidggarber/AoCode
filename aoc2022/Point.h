@@ -154,6 +154,7 @@ public:
 		return abs(pt.x - x) + abs(pt.y - y);
 	}
 
+	static Point ZERO;
 	static Point WEST, EAST, NORTH, SOUTH;
 	static Point LEFT, RIGHT, UP, DOWN;  // redundant
 };
