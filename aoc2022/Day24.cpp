@@ -5,7 +5,9 @@
 #include <string>
 #include <sstream>
 #include <unordered_set>
+#include <functional>
 #include <vector>
+#include <queue>
 #include <algorithm>
 #include "Point.h"
 #include "Rect.h"
@@ -61,11 +63,21 @@ namespace Day24
     {
     public:
         vector<Blizzard> blizzards;
+        vector<string> map;
         Rect valley;
         int loop_rate;
+        Point start;
+        Point exit;
 
         Data()
         {
+
+        }
+
+        void Init()
+        {
+            blizzards.clear();
+
             ifstream file(FileFromNamespace(__FUNCSIG__));
             if (file.is_open())
             {
@@ -74,6 +86,7 @@ namespace Day24
                 while (!file.eof())
                 {
                     getline(file, line);
+                    map.push_back(line);
                     for (int x = 0; x < line.size(); x++)
                     {
                         char c = line[x];
@@ -99,6 +112,9 @@ namespace Day24
                 }
                 loop_rate = h * valley.width;
             }
+
+            start = Point(1, 0);
+            exit = Point(valley.Right() - 1, valley.Bottom());
         }
 
         unordered_set<Point> BlizzardsAt(int minute)
@@ -111,211 +127,167 @@ namespace Day24
             return std::move(map);
         }
 
-        Point Exit()
+        char MapAt(const Point& pos)
         {
-            return Point(valley.Right() - 1, valley.Bottom());
+            return map[pos.y][pos.x];
+        }
+
+        bool IsFree(const Point& pos, int minute)
+        {
+            //if (pos == exit)
+            //    return true;
+            if (!valley.Contains(pos))
+                return false;
+            Point e = valley.Wrap(pos - (Point::EAST * minute));
+            Point w = valley.Wrap(pos - (Point::WEST * minute));
+            Point n = valley.Wrap(pos - (Point::NORTH * minute));
+            Point s = valley.Wrap(pos - (Point::SOUTH * minute));
+            return MapAt(e) != '>'
+                && MapAt(w) != '<'
+                && MapAt(n) != '^'
+                && MapAt(s) != 'v';
         }
     };
 
-    class Route
+    Data data;
+
+    class Progress
     {
     public:
-        //vector<Point> steps;
-        Rect valley;
-        Point start;
-        Point cur;
-        Point loop_detect;
-        int loop_minute;
-        unordered_set<Point>& blizzards;
-        unordered_set<Point3d>& seen;
+        Point pos;
+        int minute;
+        int score;  // low is better
 
-        Route(const Rect& v, Point c, int min, unordered_set<Point>& bliz, unordered_set<Point3d>& sn)
-            : start(1, 0)
-            , valley(v)
-            , cur(c)
-            , loop_minute(min)
-            , blizzards(bliz)
-            , seen(sn)
+        Progress(Point p, int min, bool aim_for_exit)
+            : pos(p)
+            , minute(min)
+        {
+            score = min + pos.ManhattenDistance(aim_for_exit ? data.exit : data.start);
+        }
+
+        Progress(const Progress& p)
+            : pos(p.pos)
+            , minute(p.minute)
+            , score(p.score)
         {
         }
 
-        Point Exit()
+        const Progress& operator=(const Progress& p)
         {
-            return Point(valley.Right() - 1, valley.Bottom());
+            pos = p.pos;
+            minute = p.minute;
+            score = p.score;
+            return *this;
         }
 
-        Point Cur()
+        bool operator==(const Progress& p) const
         {
-            return cur;
-            //Point p(1, 0);  // Always
-            //for (auto & dir : steps)
-            //{
-            //    p += dir;
-            //}
+            return pos == p.pos
+                && minute == p.minute;
         }
 
-        bool AtExit()
+        // priority queue defers less-than objects
+        bool operator<(const Progress& p) const
         {
-            return Cur() == Exit();
+            return score > p.score
+                || (score == p.score && minute > p.minute);
         }
 
-        bool IsSafe(const Point& p)
+        vector<Progress> Next(bool aim_for_exit)
         {
-            Point3d p3(p.x, p.y, loop_minute);
-            if (seen.find(p3) != seen.end())
-                return false;  // Do not go back here
-            return valley.Contains(p)
-                && find(blizzards.begin(), blizzards.end(), p) == blizzards.end();
+            vector<Progress> next;
+            if (aim_for_exit && (pos + Point::SOUTH == data.exit))
+                next.push_back(Progress(pos + Point::SOUTH, minute + 1, aim_for_exit));
+            else if (!aim_for_exit && (pos + Point::NORTH == data.start))
+                next.push_back(Progress(pos + Point::NORTH, minute + 1, aim_for_exit));
+
+            if (data.IsFree(pos + Point::SOUTH, minute + 1))
+                next.push_back(Progress(pos + Point::SOUTH, minute + 1, aim_for_exit));
+            if (data.IsFree(pos + Point::EAST, minute + 1))
+                next.push_back(Progress(pos + Point::EAST, minute + 1, aim_for_exit));
+            if (data.IsFree(pos + Point::WEST, minute + 1))
+                next.push_back(Progress(pos + Point::WEST, minute + 1, aim_for_exit));
+            if (data.IsFree(pos + Point::NORTH, minute + 1))
+                next.push_back(Progress(pos + Point::NORTH, minute + 1, aim_for_exit));
+            if (pos == data.start || pos == data.exit || data.IsFree(pos, minute + 1))
+                next.push_back(Progress(pos, minute + 1, aim_for_exit));
+            return next;
         }
 
-        vector<Point> Moves()
+        size_t Hash() const
         {
-            vector<Point> moves;
-            Point c = Cur();
-            if (c + Point::SOUTH == Exit())
-            {
-                moves.push_back(Point::SOUTH);
-                return moves;
-            }
-            if (c == start || IsSafe(c))
-                moves.push_back(Point::ZERO);  // Can sit still
-            if (IsSafe(c + Point::NORTH))
-                moves.push_back(Point::NORTH);
-            if (IsSafe(c + Point::SOUTH))
-                moves.push_back(Point::SOUTH);
-            if (IsSafe(c + Point::WEST))
-                moves.push_back(Point::WEST);
-            if (IsSafe(c + Point::EAST))
-                moves.push_back(Point::EAST);
-
-            return moves;
+            return (pos.x << 20)
+                ^ (pos.y << 10)
+                ^ minute;
         }
     };
 
-    class Path
+    struct ProgressHash
     {
-    public:
-        vector<vector<Point>> path;
-
-        int Minute()
+        size_t operator()(const Progress& p) const noexcept
         {
-            return path.size();
-        }
-
-        Point Cur()
-        {
-            Point p(1, 0);  // Always
-            for (auto & step : path)
-            {
-                Point dir = step.back();
-                p += dir;
-            }
-            return p;
-        }
-
-        Point LoopDetector(int loop_rate)
-        {
-            Point p(1, 0);  // Always
-            for (int i = 0; i < (int)path.size() + 1 - loop_rate; i++)
-            {
-                Point dir = path[i].back();
-                p += dir;
-            }
-            return p;
-        }
-
-        void Move(vector<Point>& moves)
-        {
-            path.push_back(moves);
-        }
-
-        void RollBack()
-        {
-            auto it = path.end();
-            while (path.size() > 0)
-            {
-                auto& step = path.back();
-                step.pop_back();
-                if (step.size() > 0)
-                    break;
-                path.pop_back();
-            }
-        }
-
-        void Print()
-        {
-            cout << path.size() << " steps: ";
-            Point p(1, 0);  // Always
-            for (auto& step : path)
-            {
-                Point dir = step.back();
-                p += dir;
-                if (dir.x > 0)
-                    cout << "right, ";
-                else if (dir.x < 0)
-                    cout << "left, ";
-                else if (dir.y > 0)
-                    cout << "down, ";
-                else if (dir.y < 0)
-                    cout << "up, ";
-                else
-                    cout << "sit, ";
-            }
-            cout << " == " << p.x << "," << p.y << "\n";
+            return p.Hash();
         }
     };
 
     size_t Part1()
     {
-        Data data;
-        Path path;
-        int best = 0x1 << 30;
-        Point exit = data.Exit();
-        unordered_set<Point3d> seen;
-
-        while (true)
+        data.Init();
+        priority_queue<Progress> queue;
+        unordered_set<Progress, ProgressHash> set;
+        queue.push(Progress(data.start, 0, true));
+        while (queue.size() > 0)
         {
-            Point cur = path.Cur();
-            //path.Print();
-
-            Point3d curM(cur.x, cur.y, path.Minute() % data.loop_rate);
-            seen.insert(curM);
-
-            if (cur == exit)
+            Progress p = queue.top();
+            queue.pop();
+            if (p.pos == data.exit)
+                return p.minute;
+            auto next = p.Next(true);
+            for (auto it = next.begin(); it != next.end(); it++)
             {
-                if (path.Minute() < best)
+                if (set.find(*it) == set.end())
                 {
-                    best = path.Minute();
-                    cout << "Found a route in " << best << " minutes\n";
-                    //path.Print();
-                    //auto debug = data.BlizzardsAt(11);
+                    queue.push(*it);
+                    set.insert(*it);
                 }
             }
-            auto blizzards = data.BlizzardsAt(path.Minute() + 1);
-            Route r(data.valley, cur, (path.Minute() + 1) % data.loop_rate, blizzards, seen);
-            auto next = r.Moves();
-            if (next.size() == 0 || path.Minute() + cur.ManhattenDistance(exit) >= best)
-            {
-                path.RollBack();
-                if ((path.Minute() % 20) == 0)
-                    cout << "Roll back to " << path.Minute() << "\n";
-                if (path.Minute() == 0)
-                    break;
-            }
-            else
-                path.path.push_back(next);
         }
 
-        // UNSOLVED
-        // Currently takes about 40 minutes. 
-        // Best guess was 413, but AoC says that's still too high.
-
-        return best;
+        return 0;
     }
 
     size_t Part2()
     {
-        Data data;
+        data.Init();
+        priority_queue<Progress> queue;
+        unordered_set<Progress, ProgressHash> set;
+        queue.push(Progress(data.start, 0, true));
+        int stage = 0;
+        while (queue.size() > 0)
+        {
+            Progress p = queue.top();
+            queue.pop();
+            if (stage == 2 && p.pos == data.exit)
+                return p.minute;
+            else if ((stage == 0 && p.pos == data.exit) || (stage == 1 && p.pos == data.start))
+            {
+                cout << "Stage " << stage << " completed at minute " << p.minute << "\n";
+                while (!queue.empty())
+                    queue.pop();
+                set.clear();
+                stage++;
+            }
+            auto next = p.Next(stage != 1);
+            for (auto it = next.begin(); it != next.end(); it++)
+            {
+                if (set.find(*it) == set.end())
+                {
+                    queue.push(*it);
+                    set.insert(*it);
+                }
+            }
+        }
+
         return 0;
     }
 

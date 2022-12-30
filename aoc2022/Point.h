@@ -47,7 +47,7 @@ public:
 	}
 	Point operator+(const Point& pt) const
 	{
-		Point sum(pt.x + x, pt.y + y);
+		Point sum(x + pt.x, y + pt.y);
 		return sum;
 	}
 	const Point& operator-=(const Point& pt)
@@ -58,7 +58,7 @@ public:
 	}
 	Point operator-(const Point& pt) const
 	{
-		Point delta(pt.x - x, pt.y - y);
+		Point delta(x - pt.x, y - pt.y);
 		return delta;
 	}
 	const Point& operator*=(int k)
