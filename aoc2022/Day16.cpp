@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <queue>
 #include <algorithm>
 
 using namespace std;
@@ -17,14 +18,50 @@ using namespace std;
 // https://adventofcode.com/2022/day/16
 namespace Day16
 {
+    class Tunnel
+    {
+    public:
+        string dest;
+        long distance;
+
+        Tunnel() = default;
+        Tunnel(const Tunnel& t) = default;
+        Tunnel(string de, long di)
+            : dest(de)
+            , distance(di)
+        {}
+
+        const Tunnel& operator=(const Tunnel& t)
+        {
+            dest = t.dest;
+            distance = t.distance;
+            return *this;
+        }
+
+        bool operator==(const Tunnel& t) const
+        {
+            return dest == t.dest && distance == t.distance;
+        }
+
+        // Prioritize shorter distances and earlier names
+        bool operator<(const Tunnel& t) const
+        {
+            return distance > t.distance
+                || (distance == t.distance && dest > t.dest);
+        }
+    };
+
     class Valve
     {
     public:
+        string name;
         long rate;
-        vector<string> tunnels;
+        unordered_map<string, long> tunnels;
+        unordered_map<string, string> intermediates;
 
         Valve() = default;
         Valve(const Valve& v) = default;
+
         const Valve& operator=(const Valve& v)
         {
             rate = v.rate;
@@ -36,15 +73,63 @@ namespace Day16
         {
             return tunnels.size() == 1;
         }
+
+        /*
+        * IDEA
+        * While reducing the map, document the non-zero tunnels that are crossed along the way
+        * (there may be multiple paths - document all)
+        * Then when choosing to go from AA->HH without turning on EE, we know we're making that choice.
+        * If HH is 5 steps away vs. EE is 2, the value of HH needs to be 3x more, if we know we'll double back.
+        * Or 6x more if we wouldn't otherwise double back.
+        * Thus, starting at AA, it's never worth skipping over DD, but it is worth skipping over EE to get to HH.
+        */
+
+        void RemoveZeros(const unordered_map<string, Valve*>& valves)
+        {
+            unordered_map<string, long> best;
+            best[name] = 0;
+            priority_queue<Tunnel> zeros;
+            for (auto it = tunnels.begin(); it != tunnels.end(); it++)
+            {
+                //best[it->first] = it->second;
+                //if (valves.at(it->first)->rate == 0)
+                zeros.push(Tunnel(it->first, it->second));
+            }
+            tunnels.clear();
+            while (zeros.size() > 0)
+            {
+                Tunnel t = zeros.top();
+                zeros.pop();
+                Valve* v = valves.at(t.dest);
+                auto bit = best.find(v->name);
+                if (bit != best.end() && t.distance >= bit->second)
+                    continue;
+                best[v->name] = t.distance;
+                if (v->rate > 0)
+                    tunnels[v->name] = t.distance;
+                for (auto it = v->tunnels.begin(); it != v->tunnels.end(); it++)
+                {
+                    zeros.push(Tunnel(it->first, t.distance + it->second));
+                }
+            }
+        }
     };
 
     class Data
     {
     public:
         unordered_map<string, Valve*> valves;
+        int working_valves = 0;
+        int max_flow = 0;
 
         Data()
         {
+
+        }
+
+        void Init()
+        {
+            valves.clear();
             ifstream file(FileFromNamespace(__FUNCSIG__));
             if (file.is_open())
             {
@@ -55,270 +140,250 @@ namespace Day16
 
                     Valve* v = new Valve;
                     string valve, name, has, flow, rate, tunnel, leads, to, other;
-                    char comma;
                     stringstream ss(line);
-                    ss >> valve >> name >> has >> flow >> rate >> tunnel >> leads >> to >> valve;
+                    ss >> valve >> v->name >> has >> flow >> rate >> tunnel >> leads >> to >> valve;
                     v->rate = atoi(rate.substr(5, rate.size() - 6).c_str());
                     while (!ss.eof())
                     {
                         ss >> other;
-                        v->tunnels.push_back(other.substr(0, 2));
+                        string dest = other.substr(0, 2);
+                        v->tunnels[dest] = 1;
                     }
-                    valves[name] = v;
+                    valves[v->name] = v;
                 }
+
+                max_flow = 0;
+                for (auto it = valves.begin(); it != valves.end(); it++)
+                {
+                    max_flow += it->second->rate;
+                    it->second->RemoveZeros(valves);
+                }
+                working_valves = valves["AA"]->tunnels.size();
+                if (valves["AA"]->rate > 0)
+                    working_valves++;
             }
         }
-    };
 
-    class Branch
-    {
-    public:
-        vector<string> options;
-        int cur;
-
-        Branch(vector<string> opts)
+        unordered_set<string> InterestingValves(const unordered_set<string>& ignore)
         {
-            options = opts;
-            cur = 0;
-        }
-
-        Branch(const Branch& b) = default;
-        const Branch& operator=(const Branch& b)
-        {
-            options = b.options;
-            cur = b.cur;
-        }
-
-        string Current()
-        {
-            return options[cur];
-        }
-
-        bool Next()
-        {
-            return ++cur < options.size();
-        }
-
-        int Remaining()
-        {
-            return options.size() - cur;
-        }
-    };
-
-    class Route
-    {
-    public:
-        vector<string> path;
-        unordered_set<string> open;
-        unordered_set<string> finished;
-        unordered_set<string> visited;
-        long flow_per_minute;
-        long total_flow;
-
-        Route(Data& data, vector<Branch>& branches, bool trace)
-        {
-            auto it = branches.begin();
-            path.push_back(it->Current());
-
-            if (trace)
-                Trace(data, *it);
-
-            for (it++; it != branches.end(); it++)
+            unordered_set<string> set;
+            for (auto it = valves.begin(); it != valves.end(); it++)
             {
-                if (trace)
-                    Trace(data, *it);
-                Continue(data, it->Current());
+                if (it->second->rate > 0 && ignore.find(it->first) == ignore.end())
+                    set.insert(it->first);
             }
-            if (trace)
-                cout << " ==> " << total_flow << " @ " << flow_per_minute << "\n";
+            return set;
+        }
+    };
+
+    Data data;
+
+    class Progress
+    {
+    public:
+        string path;
+        long minute;
+        long released;
+        long increment = 0;
+        string location;
+        unordered_set<string> open;
+        unordered_set<string> openable;
+
+        Progress(long start_minute, long distance, string p, string dest, long initial_released, const unordered_set<string>& o, const unordered_set<string>& o2)
+            : minute(start_minute)
+            , released(initial_released)
+            , location(dest)
+            , open(o)
+            , openable(o2)
+        {
+            path = p.size() == 0 ? dest : (p + " - " + dest);
+            // If we haven't opened the dest valve yet, then plan one more minute to do that
+            if (data.valves.at(dest)->rate > 0 && o.find(dest) == o.end())
+                distance++;
+            released += Releasing() * distance;  // releasing doesn't include the dest valve yet
+            open.insert(dest);  // Open after travelling
+            openable.erase(dest);
+            minute += distance;
+            increment = Releasing();
         }
 
-        Route(string start)
-        {
-            path.push_back(start);
-            flow_per_minute = total_flow = 0;
-            // Any flow=zeros are effectively already open
-            //for (auto it = zeros.begin(); it != zeros.end(); it++)
-            //    open.insert(*it);
-        }
+        Progress() = default;
+        Progress(const Progress& p) = default;
 
-        Route(const Route& r)
+        const Progress& operator=(const Progress& p)
         {
-            path = r.path;
-            open = r.open;
-            finished = r.finished;
-            flow_per_minute = r.flow_per_minute;
-            total_flow = r.total_flow;
-        }
-
-        const Route& operator=(const Route& r)
-        {
-            path = r.path;
-            open = r.open;
-            finished = r.finished;
-            flow_per_minute = r.flow_per_minute;
-            total_flow = r.total_flow;
+            path = p.path;
+            minute = p.minute;
+            released = p.released;
+            location = p.location;
+            open = p.open;
+            openable = p.openable;
+            increment = p.increment;
             return *this;
         }
 
-        string Current()
+        long Releasing() const
         {
-            return path.back();
+            long pressure = 0;
+            for (auto it = open.begin(); it != open.end(); it++)
+                pressure += data.valves.at(*it)->rate;
+            return pressure;
         }
 
-        void Trace(Data& data, Branch& br)
+        bool operator==(const Progress& p) const
         {
-            string f = br.Current();
-            if (f == "~")
-                cout << "~" << Current()[0];
-            else if (f == "." || !IsOpen(data, f))
-                cout << f;
-            else
-                cout << (char)tolower(f[0]);
-            cout << "(" << br.Remaining() << ") ";
+            return minute == p.minute
+                && released == p.released
+                && location == p.location
+                && open.size() == p.open.size()
+                && Releasing() == p.Releasing();
         }
 
-        bool IsOpen(Data& data, string name)
+        bool operator<(const Progress& p) const
         {
-            return data.valves[name]->rate == 0 || open.find(name) != open.end();
+            // Prioritize earlier, with more released
+            if (minute != p.minute)
+                return minute > p.minute;
+            if (released != p.released)
+                return released < p.released;
+            if (location != p.location)
+                return location < p.location;
+            if (open.size() != p.open.size())
+                return open.size() < p.open.size();
+            return Releasing() < p.Releasing();
         }
 
-        bool IsOpen(Data& data)
+        vector<Progress> Options(long remaining_minutes)
         {
-            return IsOpen(data, Current());
-        }
-
-        bool IsFinished(string tunnel)
-        {
-            return finished.find(tunnel) != finished.end();
-        }
-
-        vector<string> Options(Data& data, string prev)
-        {
-            vector<string> options;
-            if (!IsOpen(data))
-                options.push_back("~");  // Special code means open
-            for (auto it = data.valves[Current()]->tunnels.begin(); it != data.valves[Current()]->tunnels.end(); it++)
+            vector<Progress> options;
+            Valve* v = data.valves.at(location);
+            for (auto it = v->tunnels.begin(); it != v->tunnels.end(); it++)
             {
-                // Don't return to a tunnel having changed nothing
-                string status = *it + to_string(flow_per_minute);
-                if (visited.find(status) != visited.end())
-                    continue;
-
-                // Don't go to tunnels we can't improve
-                // Also don't turn around and go back where we just came from if we didn't do anything interesting
-                if (!IsFinished(*it) && *it != prev)
-                    options.push_back(*it);
+                if (it->second < remaining_minutes
+                    && openable.find(it->first) != openable.end())
+                {
+                    Progress p(minute, it->second, path, it->first, released, open, openable);
+                    options.push_back(p);
+                }
             }
-            if (options.size() == 0)
-                options.push_back(".");  // Sit around
+            if (options.size() == 0 && remaining_minutes > 0)
+            {
+                // Fast forward to the end, just sitting here
+                Progress p(minute, remaining_minutes, path, location, released, open, openable);
+                options.push_back(p);
+            }
             return options;
-        }
-
-        void Continue(Data& data, string dest)
-        {
-            total_flow += flow_per_minute;
-            if (dest == "~")
-            {
-                open.insert(Current());
-                flow_per_minute += data.valves[Current()]->rate;
-            }
-            else if (dest != ".")
-            {
-                bool done = IsOpen(data);
-                for (auto it = data.valves[Current()]->tunnels.begin(); done && it != data.valves[Current()]->tunnels.end(); it++)
-                {
-                    if (*it != dest && !IsFinished(*it))
-                        done = false;
-                }
-                if (done)
-                {
-                    finished.insert(Current());
-                }
-                path.push_back(dest);
-            }
-            string status = Current() + to_string(flow_per_minute);
-            visited.insert(status);
-        }
-
-        Route Continue(Data& data, vector<string>& options, int index)
-        {
-            Route next(*this);
-            next.total_flow += next.flow_per_minute;
-            if (options[index] == "~")
-            {
-                next.open.insert(Current());
-                next.flow_per_minute += data.valves[Current()]->rate;
-            }
-            else if (options[index] != ".")
-            {
-                string dest = options[index];
-                bool done = IsOpen(data);
-                for (auto it = data.valves[Current()]->tunnels.begin(); done && it != data.valves[Current()]->tunnels.end(); it++)
-                {
-                    if (*it != dest && !IsFinished(*it))
-                        done = false;
-                }
-                if (done)
-                {
-                    next.finished.insert(Current());
-                }
-                next.path.push_back(dest);
-            }
-            return next;
         }
     };
 
     long Part1()
     {
-        Data data;
+        data.Init();
+
+        unordered_set<string> open;
+        unordered_set<string> openable = data.InterestingValves(open);
+        priority_queue<Progress> queue;
+        Progress start(0, 0, "", "AA", 0, open, openable);
+        queue.push(start);
+
         long best = 0;
-
-        vector<string> start;
-        start.push_back("AA");
-
-        vector<Branch> stack;
-        stack.push_back(Branch(start));
-
-        int tracer = 0;
-
-        while (stack.size() > 0)
+        long prev_min = 0;
+        while (queue.size() > 0)
         {
-            bool trace = stack.size() == MAX_STEPS + 1;
-            if (trace)
+            Progress p = queue.top();
+            queue.pop();
+            if (p.minute > prev_min)
+                cout << "Minute " << (prev_min = p.minute) << " : queue is " << queue.size() << "\n";
+            if (p.released > best)
+                best = p.released;
+            if (p.minute == 30)
             {
-                trace &= (++tracer % TRACE_FREQ) == 0;
+                cout << p.path;
+                break;
             }
 
-            Route r(data, stack, false);
-            if (stack.size() < MAX_STEPS + 1) // Initial AA doesn't count
-            {
-                string prev = stack.size() <= 1 ? "" : stack[stack.size() - 2].Current();
-                vector<string> options = r.Options(data, prev);  // Always at least 1 (sit)
-                stack.push_back(Branch(options));
-            }
-            else
-            {
-                if (r.total_flow > best)
-                {
-                    Route rr(data, stack, true);
-                    best = r.total_flow;
-                }
-                stack.pop_back();
-                while (stack.size() > 0 && !stack.back().Next())
-                {
-                    stack.pop_back();
-                }
-            }
+            auto next = p.Options(30 - p.minute);
+            for (auto it = next.begin(); it != next.end(); it++)
+                queue.push(*it);
         }
-
         return best;
     }
 
-    size_t Part2()
+    long Part2()
     {
-        Data data;
-        return 0;
+        data.Init();
+
+        unordered_set<string> open;
+        unordered_set<string> openable = data.InterestingValves(open);
+        priority_queue<Progress> queue;
+        Progress start(0, 0, "", "AA", 0, open, openable);
+        queue.push(start);
+
+        long best = 0;
+        long prev_min = 0;
+        while (queue.size() > 0)
+        {
+            Progress p = queue.top();
+            queue.pop();
+            if (p.increment >= ((data.max_flow + 1) / 2))
+            {
+                if (p.path == "AA - DD - HH - EE")
+                {
+                    cout << "Human: " << p.path << " (" << p.increment << " @" << p.minute << ")\n";
+                }
+                priority_queue<Progress> elephant;
+                Progress eStart(0, 0, "", "AA", 0, open, p.openable);
+                elephant.push(eStart);
+
+                long prev_minE = 0;
+                while (elephant.size() > 0)
+                {
+                    Progress e = elephant.top();
+                    elephant.pop();
+                    //if (e.minute > prev_minE)
+                    //    cout << "Elephant minute " << (prev_minE = e.minute) << " : queue is " << elephant.size() << "\n";
+                    if (e.openable.size() == 0)
+                    {
+                        long total = p.released + (26 - p.minute) * p.increment
+                            + e.released + (26 - e.minute) * e.increment;
+                        if (total > best)
+                        {
+                            best = total;
+                            cout << best << " = Human: " << p.path << " (" << p.increment << " @" << p.minute
+                                << "); Elephant: " << e.path << " (" << e.increment << " @" << e.minute << ")\n";
+                        }
+                        break;
+                    }
+
+                    auto next = e.Options(26 - e.minute);
+                    for (auto it = next.begin(); it != next.end(); it++)
+                        elephant.push(*it);
+                    if (next.size() == 0)
+                    {
+                        long total = p.released + (26 - p.minute) * p.increment
+                            + e.released + (26 - e.minute) * e.increment;
+                        if (total > best)
+                        {
+                            best = total;
+                            cout << best << " = Human: " << p.path << " (" << p.increment << " @" << p.minute
+                                << "); Elephant: " << e.path << " (" << e.increment << " @" << e.minute << ")\n";
+                        }
+                    }
+                }
+                
+                if (p.increment > (data.max_flow * 2) / 3)
+                    continue;  // Don't continue deeper down the p branch
+            }
+            if (p.minute > prev_min)
+                cout << "Human minute " << (prev_min = p.minute) << " : queue is " << queue.size() << "\n";
+            if (p.minute >= 26)
+                break;
+
+            auto next = p.Options(26 - p.minute);
+            for (auto it = next.begin(); it != next.end(); it++)
+                queue.push(*it);
+        }
+        return best;
     }
 
     /// <summary>
