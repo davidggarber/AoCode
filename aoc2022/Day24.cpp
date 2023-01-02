@@ -157,18 +157,36 @@ namespace Day24
         Point pos;
         int minute;
         int score;  // low is better
+        string path;
 
-        Progress(Point p, int min, bool aim_for_exit)
+        Progress(Point p, int min, bool aim_for_exit, const Progress* prev)
             : pos(p)
             , minute(min)
         {
             score = min + pos.ManhattenDistance(aim_for_exit ? data.exit : data.start);
+            if (prev == nullptr)
+                path = "";
+            else
+            {
+                path = prev->path;
+                if (pos - prev->pos == Point::ZERO)
+                    path += "o";
+                else if (pos - prev->pos == Point::NORTH)
+                    path += "^";
+                else if (pos - prev->pos == Point::SOUTH)
+                    path += "v";
+                else if (pos - prev->pos == Point::WEST)
+                    path += "<";
+                else if (pos - prev->pos == Point::EAST)
+                    path += ">";
+            }
         }
 
         Progress(const Progress& p)
             : pos(p.pos)
             , minute(p.minute)
             , score(p.score)
+            , path(p.path)
         {
         }
 
@@ -177,6 +195,7 @@ namespace Day24
             pos = p.pos;
             minute = p.minute;
             score = p.score;
+            path = p.path;
             return *this;
         }
 
@@ -197,20 +216,20 @@ namespace Day24
         {
             vector<Progress> next;
             if (aim_for_exit && (pos + Point::SOUTH == data.exit))
-                next.push_back(Progress(pos + Point::SOUTH, minute + 1, aim_for_exit));
+                next.push_back(Progress(pos + Point::SOUTH, minute + 1, aim_for_exit, this));
             else if (!aim_for_exit && (pos + Point::NORTH == data.start))
-                next.push_back(Progress(pos + Point::NORTH, minute + 1, aim_for_exit));
+                next.push_back(Progress(pos + Point::NORTH, minute + 1, aim_for_exit, this));
 
             if (data.IsFree(pos + Point::SOUTH, minute + 1))
-                next.push_back(Progress(pos + Point::SOUTH, minute + 1, aim_for_exit));
+                next.push_back(Progress(pos + Point::SOUTH, minute + 1, aim_for_exit, this));
             if (data.IsFree(pos + Point::EAST, minute + 1))
-                next.push_back(Progress(pos + Point::EAST, minute + 1, aim_for_exit));
+                next.push_back(Progress(pos + Point::EAST, minute + 1, aim_for_exit, this));
             if (data.IsFree(pos + Point::WEST, minute + 1))
-                next.push_back(Progress(pos + Point::WEST, minute + 1, aim_for_exit));
+                next.push_back(Progress(pos + Point::WEST, minute + 1, aim_for_exit, this));
             if (data.IsFree(pos + Point::NORTH, minute + 1))
-                next.push_back(Progress(pos + Point::NORTH, minute + 1, aim_for_exit));
+                next.push_back(Progress(pos + Point::NORTH, minute + 1, aim_for_exit, this));
             if (pos == data.start || pos == data.exit || data.IsFree(pos, minute + 1))
-                next.push_back(Progress(pos, minute + 1, aim_for_exit));
+                next.push_back(Progress(pos, minute + 1, aim_for_exit, this));
             return next;
         }
 
@@ -235,13 +254,16 @@ namespace Day24
         data.Init();
         priority_queue<Progress> queue;
         unordered_set<Progress, ProgressHash> set;
-        queue.push(Progress(data.start, 0, true));
+        queue.push(Progress(data.start, 0, true, nullptr));
         while (queue.size() > 0)
         {
             Progress p = queue.top();
             queue.pop();
             if (p.pos == data.exit)
+            {
+                //cout << p.path << "\n";
                 return p.minute;
+            }
             auto next = p.Next(true);
             for (auto it = next.begin(); it != next.end(); it++)
             {
@@ -261,7 +283,7 @@ namespace Day24
         data.Init();
         priority_queue<Progress> queue;
         unordered_set<Progress, ProgressHash> set;
-        queue.push(Progress(data.start, 0, true));
+        queue.push(Progress(data.start, 0, true, nullptr));
         int stage = 0;
         while (queue.size() > 0)
         {
