@@ -148,9 +148,14 @@
     <ClCompile Include="Day9.cpp" />
     <ClCompile Include="Day11.cpp" />
     <ClCompile Include="Day13.cpp" />
+    <ClCompile Include="Point.cpp" />
+    <ClCompile Include="Point3d.cpp" />
     <ClCompile Include="Stopwatch.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Point.h" />
+    <ClInclude Include="Point3d.h" />
+    <ClInclude Include="Rect.h" />
     <ClInclude Include="Stopwatch.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
