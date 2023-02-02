@@ -17,34 +17,118 @@ namespace Day14
     class Data
     {
     public:
-        vector<string> doc;
+        unordered_map<string, string> rules;
+        string start;
 
         Data()
         {
             ifstream file(data_file);
             if (file.is_open())
             {
+                getline(file, start);
+
                 string line;
+                getline(file, line);  // blank
                 while (!file.eof())
                 {
                     getline(file, line);
-                    doc.push_back(line);
+                    string before = line.substr(0, 2);
+                    string after = line.substr(0, 1) + line.substr(6, 1) + line.substr(1, 1);
+                    rules[before] = after;
                 }
             }
         }
 
     };
 
-    int Part1()
+    size_t Part1()
     {
         Data data;
-        return 0;
+        unordered_map<string, size_t> state;
+        for (int i = 1; i < data.start.size(); i++)
+        {
+            string sub = data.start.substr(i - 1, 2);
+            state[sub] += 1;
+        }
+
+        for (int i = 0; i < 10; i++)
+        {
+            unordered_map<string, size_t> next;
+            for (auto it = state.begin(); it != state.end(); it++)
+            {
+                string a = data.rules[it->first].substr(0, 2);
+                string b = data.rules[it->first].substr(1, 2);
+                next[a] += it->second;
+                next[b] += it->second;
+            }
+            state = next;
+        }
+
+        unordered_map<char, size_t> freq;
+        for (auto it = state.begin(); it != state.end(); it++)
+        {
+            //char a = it->first[0];
+            char b = it->first[1];
+            //freq[a] += it->second;
+            freq[b] += it->second;
+        }
+        freq[data.start[0]]++;
+        size_t most = 0;
+        size_t least = data.start.size() << 10;
+        for (auto it = freq.begin(); it != freq.end(); it++)
+        {
+            if (it->second > most)
+                most = it->second;
+            if (it->second < least)
+                least = it->second;
+        }
+
+        return most - least;
     }
 
     size_t Part2()
     {
         Data data;
-        return 0;
+        unordered_map<string, size_t> state;
+        for (int i = 1; i < data.start.size(); i++)
+        {
+            string sub = data.start.substr(i - 1, 2);
+            state[sub] += 1;
+        }
+
+        for (int i = 0; i < 40; i++)
+        {
+            unordered_map<string, size_t> next;
+            for (auto it = state.begin(); it != state.end(); it++)
+            {
+                string a = data.rules[it->first].substr(0, 2);
+                string b = data.rules[it->first].substr(1, 2);
+                next[a] += it->second;
+                next[b] += it->second;
+            }
+            state = next;
+        }
+
+        unordered_map<char, size_t> freq;
+        for (auto it = state.begin(); it != state.end(); it++)
+        {
+            //char a = it->first[0];
+            char b = it->first[1];
+            //freq[a] += it->second;
+            freq[b] += it->second;
+        }
+        freq[data.start[0]]++;
+        size_t most = 0;
+        size_t least = data.start.size() << 40;
+        for (auto it = freq.begin(); it != freq.end(); it++)
+        {
+            if (it->second > most)
+                most = it->second;
+            if (it->second < least)
+                least = it->second;
+        }
+
+        return most - least;
     }
 
     /// <summary>
