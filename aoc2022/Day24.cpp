@@ -212,7 +212,7 @@ namespace Day24
                 || (score == p.score && minute > p.minute);
         }
 
-        vector<Progress> Next(bool aim_for_exit)
+        vector<Progress> Next(bool aim_for_exit) const
         {
             vector<Progress> next;
             if (aim_for_exit && (pos + Point::SOUTH == data.exit))
@@ -230,7 +230,7 @@ namespace Day24
                 next.push_back(Progress(pos + Point::NORTH, minute + 1, aim_for_exit, this));
             if (pos == data.start || pos == data.exit || data.IsFree(pos, minute + 1))
                 next.push_back(Progress(pos, minute + 1, aim_for_exit, this));
-            return next;
+            return std::move(next);
         }
 
         size_t Hash() const
@@ -273,6 +273,29 @@ namespace Day24
                     set.insert(*it);
                 }
             }
+        }
+
+        return 0;
+    }
+
+    size_t Part1a()
+    {
+        data.Init();
+        //priority_queue<Progress> queue;
+        unordered_set<Progress, ProgressHash> set;
+        set.insert(Progress(data.start, 0, true, nullptr));
+        while (true)
+        {
+            unordered_set<Progress, ProgressHash> next_set(set.size() * 3);
+            for (auto it = set.begin(); it != set.end(); it++)
+            {
+                if (it->pos == data.exit)
+                    return it->minute;
+                auto next = it->Next(true);
+                for (auto nit = next.begin(); nit != next.end(); nit++)
+                    next_set.insert(*nit);
+            }
+            set = std::move(next_set);
         }
 
         return 0;
