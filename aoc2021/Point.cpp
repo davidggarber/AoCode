@@ -5,8 +5,10 @@
 Point::Point(std::string str)
 {
 	std::stringstream stream(str);
-	stream >> x >> y;
+	char comma;
+	stream >> x >> comma >> y;
 }
+
 
 // Construct static unit axis vectors
 Point Point::ZERO(0, 0);

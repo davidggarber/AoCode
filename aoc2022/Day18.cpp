@@ -143,7 +143,7 @@ namespace Day18
     {
         Data data;
         data.FillSpace();
-        data.Print(true);
+        //data.Print(true);
         return data.CountExterior(Point3d::WEST)
             + data.CountExterior(Point3d::EAST)
             + data.CountExterior(Point3d::NORTH)
