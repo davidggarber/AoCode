@@ -1,0 +1,16 @@
+body {
+  background-color: black; 
+  color:white;
+}
+textarea {
+  background-color: #001;
+  color: #ffc;
+  font-size: 12pt;
+}
+pre {
+  border:solid 1px gray; 
+  background: #333; 
+  font-family: lucida console; 
+  font-size: 8pt; 
+  padding: 5px;
+}
