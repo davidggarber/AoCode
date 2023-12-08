@@ -60,12 +60,19 @@ function print(part, answer) {
 }
 
 var debugLines = ['', ''];
-function trace(part, text) {
+function trace(part, text, flush) {
   part--;
   if (debugLines[part].length > 0) {
     text = '\n' + text;
   }
   debugLines[part] += text;
+  if (flush != false) {
+    debugs[part].innerText = debugLines[part];
+  }
+}
+
+function flush(part) {
+  part--;
   debugs[part].innerText = debugLines[part];
 }
 
@@ -82,26 +89,4 @@ function readInput() {
     }
     raw.innerText = lines.join('\n');  
   }
-}
-
-function solve1() {
-  var sum = 0;
-  var debug = [];
-  for (var a of lines) {
-    debug.push(a);
-  }
-
-  partial(1, debug.join('\n'));
-  print(1, sum);
-}
-
-function solve2() {
-  var sum = 0;
-  var debug = [];
-  for (var a of lines) {
-    debug.push(a);
-  }
-
-  // partial(2, debug.join('\n'));
-  // print(2, sum);
 }
