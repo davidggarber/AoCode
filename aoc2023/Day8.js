@@ -19,14 +19,14 @@ function solve1() {
     }
     var left = instr[i++] == 'L';
     pos = map[pos][left ? 0 : 1];
-    // trace(1, pos, false);
+    // trace(pos, false);
     if (++steps > max) {
       break;
     }
   }
 
   //flush(1);
-  print(1, steps);
+  print(steps);
 }
 
 
@@ -64,7 +64,7 @@ function solve2() {
         steps++;
         pos = map[pos][left ? 0 : 1];
       }  
-      trace(2, p + ' -> ' + pos + ' : ' + steps);
+      trace(p + ' -> ' + pos + ' : ' + steps);
       if (!(pos in dest)) {
         dest[pos] = [];
       }
@@ -80,7 +80,7 @@ function solve2() {
       if (!done) {
         stops.push(steps);
         dest[pos].push(steps);
-        trace(2, p + ' -> ' + pos + ' : ' + dest);
+        trace(p + ' -> ' + pos + ' : ' + dest);
         left = instr[steps % instr.length] == 'L';
         steps++;
         pos = map[pos][left ? 0 : 1];
@@ -117,7 +117,7 @@ function solve2() {
     x = x * y / gcd(x, y);
   }
 
-  print(2, a);
+  print(a);
 }
 
 function lcm(a, b) {

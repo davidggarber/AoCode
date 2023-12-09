@@ -15,7 +15,7 @@ function solve1() {
       }
     }
   }
-  print(1, combos);
+  print(combos);
 }
 
 
@@ -36,5 +36,5 @@ function solve2() {
       }
     }
   }
-  print(2, combos);
+  print(combos);
 }

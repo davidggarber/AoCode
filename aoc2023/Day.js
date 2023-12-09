@@ -1,10 +1,12 @@
 var raw, output = [], debugs = [];
 var lines = [];
+var curPart = 0;
 
 function run() {
   init();
   readInput();
   solve1();
+  curPart = 1;
   solve2();
 }
 
@@ -50,9 +52,9 @@ function init() {
   body.appendChild(table);
 }
 
-function print(part, answer) {
+function print(answer) {
   answer = '' + answer;
-  var p = document.getElementById('part' + part)
+  var p = document.getElementById('part' + (curPart + 1))
   p.value = answer;
   p.focus();
   p.setSelectionRange(0, answer.length);
@@ -60,20 +62,18 @@ function print(part, answer) {
 }
 
 var debugLines = ['', ''];
-function trace(part, text, flush) {
-  part--;
-  if (debugLines[part].length > 0) {
+function trace(text, flush) {
+  if (debugLines[curPart].length > 0) {
     text = '\n' + text;
   }
-  debugLines[part] += text;
+  debugLines[curPart] += text;
   if (flush != false) {
-    debugs[part].innerText = debugLines[part];
+    debugs[curPart].innerText = debugLines[curPart];
   }
 }
 
-function flush(part) {
-  part--;
-  debugs[part].innerText = debugLines[part];
+function flush() {
+  debugs[curPart].innerText = debugLines[curPart];
 }
 
 function readInput() {

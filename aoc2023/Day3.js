@@ -10,7 +10,7 @@ function solve1() {
       var part = hasNeighbor(y, x, right);
       if (part != null) {
         sum += parseInt(m);
-        trace(1, m);
+        trace(m);
         parts.push([m, part]);  // [part#, coord]
       }
       x = right;
@@ -18,7 +18,7 @@ function solve1() {
     y++;
   }
 
-  print(1, sum);
+  print(sum);
 }
 
 function hasNeighbor(row, left, right) {
@@ -60,5 +60,5 @@ function solve2() {
     }
   }
 
-  print(2, sum);
+  print(sum);
 }

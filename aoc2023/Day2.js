@@ -14,14 +14,14 @@ function solve1() {
         if (space[1] == 'blue' && count > 14) { valid = false; }
       }
     }
-    trace(1, valid);
+    trace(valid);
     if (valid) {
       var game = parseInt(colon[0].split(' ')[1]);
       sum += game;
     }
   }
 
-  print(1, sum);
+  print(sum);
 }
 
 
@@ -42,9 +42,9 @@ function solve2() {
       }
     }
     var power = r * g * b;
-    trace(2, power);
+    trace(power);
     sum += power;
   }
 
-  print(2, sum);
+  print(sum);
 }

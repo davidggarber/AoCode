@@ -14,11 +14,11 @@ function solve1() {
         d += w + ' ';
       }
     }
-    trace(1, c + ': ' + d);
+    trace(c + ': ' + d);
     sum += pts;
   }
 
-  print(1, sum);
+  print(sum);
 }
 
 
@@ -40,10 +40,10 @@ function solve2() {
     for (; c > 0; c--) {
       dupes[i + c] += dupes[i];
     }
-    trace(2, dupes[i]);
+    trace(dupes[i]);
     sum += dupes[i];
     i++;
   }
 
-  print(2, sum);
+  print(sum);
 }

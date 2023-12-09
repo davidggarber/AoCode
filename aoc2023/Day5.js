@@ -29,7 +29,7 @@ function solve1() {
     }
   }
 
-  print(1, min);
+  print(min);
 }
 
 function map(src, mapper) {
@@ -91,7 +91,7 @@ function solve2() {
     min = Math.min(min, r[0]);
   }
 
-  print(2, min);
+  print(min);
 }
 
 function mapRanges(ranges, mapper) {

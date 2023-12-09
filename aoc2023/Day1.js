@@ -5,7 +5,7 @@ function solve1() {
     sum += parseInt(x[0] + x[x.length - 1]);
   }
 
-  print(1, sum);
+  print(sum);
 }
 
 var digits = {
@@ -29,8 +29,8 @@ function solve2() {
     }
     x = x.replace(/[a-z]/gi, '');
     sum += parseInt(x[0] + x[x.length - 1]);
-    trace(2, x);
+    trace(x);
   }
   
-  print(2, sum);
+  print(sum);
 }

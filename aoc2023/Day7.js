@@ -31,12 +31,12 @@ function solve1() {
     t.sort();
     for (var l of t) {
       var bid = parseInt(l.split(' ')[1]);
-      trace(1, original(l) + ': ' + rank + '*' + bid + ' = ' + (bid * rank));
+      trace(original(l) + ': ' + rank + '*' + bid + ' = ' + (bid * rank));
       sum += bid * rank++;
     }
   }
 
-  print(1, sum);
+  print(sum);
 }
 
 // Rename face cards so they sort
@@ -110,10 +110,10 @@ function solve2() {
     t.sort();
     for (var l of t) {
       var bid = parseInt(l.split(' ')[1]);
-      trace(2, original(l) + ': ' + rank + '*' + bid + ' = ' + (bid * rank));
+      trace(original(l) + ': ' + rank + '*' + bid + ' = ' + (bid * rank));
       sum += bid * rank++;
     }
   }
 
-  print(2, sum);
+  print(sum);
 }
