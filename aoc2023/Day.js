@@ -81,11 +81,12 @@ function readInput() {
   // Trim final \n
   raw = raw.substring(0, raw.length - 1);   
   lines = raw.split('\n');
-  var indent = raw.match(/\s+/);
   if (indent && indent.length > 0 && indent.index == 0) {
-    indent = indent[0].length;
     for (var i = 0; i < lines.length; i++) {
-      lines[i] = lines[i].substring(indent);  // remove indent
+      var indent = lines[i].match(/\s+/);
+      if (indent && indent.length > 0) {
+        lines[i] = lines[i].substring(indent[0].length);  // remove indent
+      }
     }
     raw.innerText = lines.join('\n');  
   }
