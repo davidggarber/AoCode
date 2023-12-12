@@ -5,8 +5,10 @@ var curPart = 0;
 function run() {
   init();
   readInput();
+  console.log('Part 1...');
   solve1();
   curPart = 1;
+  console.log('Part 2...');
   solve2();
 }
 
