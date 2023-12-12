@@ -1,4 +1,4 @@
-function solve1a() {
+function solve1a() {  // Initial solve of part 1
   var sum = 0;
   var progress = 0;
   for (var line of lines) {
@@ -86,22 +86,6 @@ function solve2() {
     var dams = line.match(/[0-9]+/g).map(d => parseInt(d));
     lineDams = dams.concat(dams, dams, dams, dams);
 
-    if (pattern.indexOf('.') < 0) {
-      var damSum = lineDams.length - 1;
-      for (var d of lineDams) {
-        damSum += d;
-      }
-      if (linePattern.length - damSum > 9) {
-        console.log("SKIPPING FOR NOW");
-        skipped.push(line);
-        continue;  
-      }
-      else {
-        console.log("HARD but trying. " + (linePattern.length - damSum) + ' wiggle room for ' + lineDams.length);
-      }
-    }
-
-
     // break into regions, and label with tightest and loosest possible packings
     lineRanges = linePattern.match(/[\#|\?]+/g);
     var row = calcCombos(0, 0);
@@ -157,6 +141,8 @@ function calcFit(iRange, nextDam, maxDam) {
   return count * calcCombos(iRange + 1, maxDam);
 }
 
+var seen = {};
+
 // Can we fit exactly N damaged spans in this range?
 // Where N = maxDam - nextDam, which can be zero
 function fitInRange(range, nextDam, maxDam) {
@@ -167,6 +153,14 @@ function fitInRange(range, nextDam, maxDam) {
   }
   if (range.length == 0) {
     return 0;  // Can't fit spans in zero range
+  }
+
+  if (!(range in seen)) {
+    seen[range] = {};
+  }
+  var damList = damSubset(nextDam, maxDam);
+  if (damList in seen[range]) {
+    return seen[range][damList];
   }
 
   var minNeeded = maxDam - nextDam - 1;
@@ -185,7 +179,16 @@ function fitInRange(range, nextDam, maxDam) {
       break;  // Can't skip #
     }
   }
+  seen[range][damList] = sum;  // Cache
   return sum;
+}
+
+function damSubset(first, max) {
+  var list = '';
+  for (; first < max; first++) {
+    list = ((list == '') ? ('') : (list + ',')) + lineDams[first];
+  }
+  return list;
 }
 
 // Can a span of size [dam] be placed in range at offset?
