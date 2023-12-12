@@ -1,4 +1,4 @@
-function solve1() {
+function solve1a() {
   var sum = 0;
   var progress = 0;
   for (var line of lines) {
@@ -55,13 +55,15 @@ function follows(line, dams) {
 var linePattern;
 var lineRanges;
 var lineDams;
-function solve2() {
+function solve1() {
   var sum = 0;
+  var progress = 0;
   for (var line of lines) {
+    console.log(++progress + ": " + line);
     var pattern = line.match(/[\#|\.|\?]+/)[0];
-    linePattern = pattern + '?' + pattern + '?' + pattern + '?' + pattern + '?' + pattern + '.';
+    linePattern = pattern + '.';
     var dams = line.match(/[0-9]+/g).map(d => parseInt(d));
-    lineDams = dams.concat(dams, dams, dams, dams);
+    lineDams = dams;
 
     // break into regions, and label with tightest and loosest possible packings
     lineRanges = linePattern.match(/[\#|\?]+/g);
@@ -70,6 +72,48 @@ function solve2() {
     sum += row;
   }
   print(sum);
+}
+
+
+function solve2() {
+  var sum = 0;
+  var progress = 0;
+  var skipped = [];
+  for (var line of lines) {
+    console.log(++progress + ": " + line);
+    var pattern = line.match(/[\#|\.|\?]+/)[0];
+    linePattern = pattern + '?' + pattern + '?' + pattern + '?' + pattern + '?' + pattern + '.';
+    var dams = line.match(/[0-9]+/g).map(d => parseInt(d));
+    lineDams = dams.concat(dams, dams, dams, dams);
+
+    if (pattern.indexOf('.') < 0) {
+      var damSum = lineDams.length - 1;
+      for (var d of lineDams) {
+        damSum += d;
+      }
+      if (linePattern.length - damSum > 9) {
+        console.log("SKIPPING FOR NOW");
+        skipped.push(line);
+        continue;  
+      }
+      else {
+        console.log("HARD but trying. " + (linePattern.length - damSum) + ' wiggle room for ' + lineDams.length);
+      }
+    }
+
+
+    // break into regions, and label with tightest and loosest possible packings
+    lineRanges = linePattern.match(/[\#|\?]+/g);
+    var row = calcCombos(0, 0);
+    trace(row);
+    sum += row;
+  }
+  print(sum);
+
+  console.log(skipped.length + ' unsolved:');
+  for (var s of skipped) {
+    console.log(s);
+  }
 }
 
 // How many combinations of spans can fit in this range, recursing with the remainder to later ranges
@@ -124,9 +168,16 @@ function fitInRange(range, nextDam, maxDam) {
   if (range.length == 0) {
     return 0;  // Can't fit spans in zero range
   }
+
+  var minNeeded = maxDam - nextDam - 1;
+  for (var i = nextDam; i < maxDam; i++) {
+    minNeeded += lineDams[i];
+  }
+  var lastStart = range.length - minNeeded;
+
   var sum = 0;
   var dam = lineDams[nextDam++];
-  for (var i = 0; i <= range.length - dam; i++) {
+  for (var i = 0; i <= lastStart; i++) {
     if (matches(range, i, dam)) {
       sum += fitInRange(range.substring(i + dam + 1), nextDam, maxDam);  // REVIEW: +1 past end
     }
