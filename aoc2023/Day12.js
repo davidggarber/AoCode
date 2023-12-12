@@ -52,143 +52,99 @@ function follows(line, dams) {
   return true;
 }
 
-
+var linePattern;
+var lineRanges;
+var lineDams;
 function solve2() {
   var sum = 0;
-  var progress = 0;
   for (var line of lines) {
-    console.log(++progress);
     var pattern = line.match(/[\#|\.|\?]+/)[0];
-    pattern = pattern + '?' + pattern + '?' + pattern + '?' + pattern + '?' + pattern + '.';
-    var patLen = pattern.length;
+    linePattern = pattern + '?' + pattern + '?' + pattern + '?' + pattern + '?' + pattern + '.';
     var dams = line.match(/[0-9]+/g).map(d => parseInt(d));
-    dams = dams.concat(dams, dams, dams, dams);
+    lineDams = dams.concat(dams, dams, dams, dams);
 
-    var starts = [];  // all valid starting offset
-    var lengths = [];  // all valid lengths at each starting offset
-    var lastMandatory = 0;
-    for (var i = 0; i < pattern.length; i++) {
-      if (pattern[i] == '#') {
-        lastMandatory = i;
-      }
-      if ((i == 0 || pattern[i - 1] != '#') && pattern[i] != '.') {
-        starts.push(i);
-        var lens = [];
-        for (var j = i + 1; j <= pattern.length - 1; j++) {
-          if (pattern[j] == '.') {
-            lens.push(j - i);
-            break;
-          }
-          else if (pattern[j] == '?') {
-            lens.push(j - i);
-            // no break
-          }
-        }
-        lengths.push(lens);
-      }
-    }
-    starts.push(patLen + 1);
-
-    // var ends = [];
-    // for (var i = 1; i < pattern.length; i++) {
-    //   if (pattern[i - 1] != '.' && pattern[i] != '#') {
-    //     ends.push(i);
-    //     for (var j = 0; j < starts.length && starts[j] < i; j++) {
-    //       lengths[j].push(i - starts[j]);
-    //     }
-    //   }
-    // }
-    // ends.push(patLen);
-
-    // initially justify left
-    var places = [];
-    var s = 0;
-    for (var d of dams) {
-      while (lengths[s].indexOf(d) < 0) {
-        s++;
-      }
-      // while (ends.indexOf(starts[s] + d) < 0) {
-      //   s++;
-      // }
-      places.push(s);
-      var len = starts[s] + d;
-      while (starts[s] <= len) {
-        s++;
-      }
-    }
-    var maxP = dams.length;
-    places.push(starts.length - 1);
-
-    var row = 0;
-    var loops = 0;
-    var tries = 0;
-    // incrementally shift everything to the right
-    var p = maxP - 1;
-    while (p >= 0) {
-      loops++;
-      if (starts[places[maxP - 1]] + dams[maxP - 1] >= lastMandatory) {
-        tries++;
-        var test = makeFromPlaces(starts, places, dams, patLen);
-        if (matches(pattern, test)) {
-          row++;
-          // if (0 == row % 10000) { console.log(row); }
-        }  
-      }
-
-      p = maxP - 1;
-      for ( ; p >= 0; p--) {
-        // Could this move right?
-        var shift = 1;
-        var nextEnd = starts[places[p] + shift] + dams[p];
-        while (nextEnd < starts[places[p + 1]]) {
-          if (lengths[places[p] + shift].indexOf(dams[p]) >= 0) { break; }
-          shift++;
-          nextEnd = starts[places[p] + shift] + dams[p];
-        }
-        if (nextEnd < starts[places[p + 1]]) { break; }
-      }
-      if (p >= 0) {
-        // group p could move right to the next starting point
-        places[p] += shift;
-        // reset every p after it to follow as tightly left as possible
-        var s = places[p];
-        for (var q = p; q < maxP; q++) {
-          while (lengths[s].indexOf(dams[q]) < 0) {
-            s++;
-          }    
-          places[q] = s;
-          len = starts[s] + dams[q];
-          while (starts[s] <= len) {
-            s++;
-          }
-        }
-      }
-    }
-
-    trace(row + ' in ' + tries + ' tries (' + loops + ' shifts)');
+    // break into regions, and label with tightest and loosest possible packings
+    lineRanges = linePattern.match(/[\#|\?]+/g);
+    var row = calcCombos(0, 0);
+    trace(row);
     sum += row;
   }
-
   print(sum);
 }
 
-var dots = new Array(50).join('.');
-var pounds = new Array(50).join('#');
-
-function makeFromPlaces(starts, places, dams, patlen) {
-  var str = '';
-  for (var i = 0; i < dams.length; i++) {
-    var pos = starts[places[i]];
-    str += dots.substring(0, pos - str.length);
-    str += pounds.substring(0, dams[i]);
+// How many combinations of spans can fit in this range, recursing with the remainder to later ranges
+function calcCombos(iRange, iDam) {
+  if (iDam == lineDams.length)
+  {
+    // We're out of spans. Fast-forward through remaining ranges
+    for (var r = iRange; r < lineRanges.length; r++) {
+      if (lineRanges[r].indexOf('#') >= 0) {
+        return 0;  // no spans left for required range
+      }
+    }
+    return 1;
   }
-  str += dots.substring(0, patlen - str.length);
-  return str;
+  if (iRange >= lineRanges.length) {
+    // We're out of ranges, and we have more spans (didn't get handled above)
+    return 0;
+  }
+  // var combos = [];
+  var sum = 0;
+  for (var maxDam = iDam; maxDam <= lineDams.length; maxDam++) {
+    var count = calcFit(iRange, iDam, maxDam);
+    // combos.push([d, count]);
+    sum += count;
+  }
+  // return combos;
+  return sum;
 }
 
-function matches(pattern, str) {
-  for (var i = 0; i < pattern.length; i++) {
-    if (pattern[i] != '?' && pattern[i] != str[i]) { return false; }
+// How many ways can the next set of damaged spans fit into the next range?
+// Note: one way to fit is to use zero spans, and save them for later
+function calcFit(iRange, nextDam, maxDam) {
+  // if (damCount == 0) {
+  //   return calcCombos(iRange + 1, nextDam);  // 1x combo of zero things, recursing
+  // }
+  var range = lineRanges[iRange];
+  var count = fitInRange(range, nextDam, maxDam);
+  if (count == 0) { 
+    return 0; 
   }
-  return true;
+  return count * calcCombos(iRange + 1, maxDam);
+}
+
+// Can we fit exactly N damaged spans in this range?
+// Where N = maxDam - nextDam, which can be zero
+function fitInRange(range, nextDam, maxDam) {
+  if (nextDam == maxDam) {
+    // Is the rest of this range optional? Then this works.
+    // Else return zero to throw away any progress down this branch.
+    return range.indexOf('#') < 0 ? 1 : 0;
+  }
+  if (range.length == 0) {
+    return 0;  // Can't fit spans in zero range
+  }
+  var sum = 0;
+  var dam = lineDams[nextDam++];
+  for (var i = 0; i <= range.length - dam; i++) {
+    if (matches(range, i, dam)) {
+      sum += fitInRange(range.substring(i + dam + 1), nextDam, maxDam);  // REVIEW: +1 past end
+    }
+    if (range[i] == '#') {
+      break;  // Can't skip #
+    }
+  }
+  return sum;
+}
+
+// Can a span of size [dam] be placed in range at offset?
+function matches(range, offset, dam) {
+  if (range.substring(0, offset).indexOf('#') >= 0) { 
+    return false;  // skipped required positions
+  }
+  if (range.length < offset + dam) {
+    return false;  // not long enough
+  }
+  return range.length == (offset + dam)
+    || range[offset + dam] != '#';  // does it end at a non-viable boundary?
 }
