@@ -44,10 +44,7 @@ function mirrorValue(rows) {
 function pivot(rows) {
   var columns = [];
   for (var x = 0; x < rows[0].length; x++) {
-    var col = '';
-    for (var line of rows) {
-      col += line.length > 0 ? line[x] : ' ';
-    }
+    var col = rows.map(r => r[x]).reduce((str, ch) => str += ch);
     if (col.trim().length > 0) {
       columns.push(col);
     }
@@ -84,9 +81,9 @@ function smudgeValue(rows) {
       while (db <= 1 && up >= 0 && down < rows.length) {
         db += diffBits(rows[up--], rows[down++]);
       }
-      if (db == 0) {
-        // smudge could be on outside edge
-      }
+      // if (db == 0) {
+        // smudge could be on outside edge, but then we'd be indistinguishable from non-smudge
+      // }
       if (db == 1) {
         sum += y;
       }
