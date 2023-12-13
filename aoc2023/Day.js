@@ -83,13 +83,11 @@ function readInput() {
   // Trim final \n
   raw = raw.substring(0, raw.length - 1);   
   lines = raw.split('\n');
-  if (indent && indent.length > 0 && indent.index == 0) {
-    for (var i = 0; i < lines.length; i++) {
-      var indent = lines[i].match(/\s+/);
-      if (indent && indent.length > 0) {
-        lines[i] = lines[i].substring(indent[0].length);  // remove indent
-      }
+  for (var i = 0; i < lines.length; i++) {
+    var indent = lines[i].match(/\s+/);
+    if (indent && indent.index == 0) {
+      lines[i] = lines[i].substring(indent[0].length);  // remove indent
     }
-    raw.innerText = lines.join('\n');  
   }
+  raw.innerText = lines.join('\n');  
 }

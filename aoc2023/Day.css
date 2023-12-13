@@ -14,3 +14,6 @@ pre {
   font-size: 8pt; 
   padding: 5px;
 }
+td {
+  vertical-align: top;
+}
