@@ -95,10 +95,7 @@ function readInput() {
 function pivot(rows) {
   var columns = [];
   for (var x = 0; x < rows[0].length; x++) {
-    var col = '';
-    for (var line of rows) {
-      col += line.length > 0 ? line[x] : ' ';
-    }
+    var col = rows.map(r => r[x]).reduce((str, ch) => str += ch);
     if (col.trim().length > 0) {
       columns.push(col);
     }

@@ -70,9 +70,9 @@ function smudgeValue(rows) {
       while (db <= 1 && up >= 0 && down < rows.length) {
         db += diffBits(rows[up--], rows[down++]);
       }
-      if (db == 0) {
-        // smudge could be on outside edge
-      }
+      // if (db == 0) {
+        // smudge could be on outside edge, but then we'd be indistinguishable from non-smudge
+      // }
       if (db == 1) {
         sum += y;
       }
