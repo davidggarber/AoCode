@@ -65,7 +65,7 @@ function load(grid) {
   var row = grid.length;
   for (var line of grid) {
     var rocks = line.match(/O/g)?.length ?? 0;
-    sum += rocks * row;
+    sum += rocks * row--;
   }
   return sum;
 }
@@ -89,7 +89,6 @@ function solve2() {
   var ff = (target - count) % freq;
   while (ff-- > 0) {
     grid = spin(grid);
-    var l = load(grid);
   }
 
   print(load(grid));
