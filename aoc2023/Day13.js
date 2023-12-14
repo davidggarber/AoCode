@@ -41,20 +41,6 @@ function mirrorValue(rows) {
   return sum;
 }
 
-function pivot(rows) {
-  var columns = [];
-  for (var x = 0; x < rows[0].length; x++) {
-    var col = '';
-    for (var line of rows) {
-      col += line.length > 0 ? line[x] : ' ';
-    }
-    if (col.trim().length > 0) {
-      columns.push(col);
-    }
-  }
-  return columns;
-}
-
 function isRowMirror(rows, up, down) {
   while (up >= 0 && down < rows.length) {
     if (rows[up--] != rows[down++]) {
