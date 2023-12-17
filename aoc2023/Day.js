@@ -102,3 +102,11 @@ function pivot(rows) {
   }
   return columns;
 }
+
+function height() {
+  return lines.length;
+}
+
+function width() {
+  return lines[0].length;
+}
