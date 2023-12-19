@@ -82,13 +82,7 @@ function readInput() {
   raw = document.getElementById('pre').innerText;
   // Trim final \n
   raw = raw.substring(0, raw.length - 1);   
-  lines = raw.split('\n');
-  for (var i = 0; i < lines.length; i++) {
-    var indent = lines[i].match(/\s+/);
-    if (indent && indent.index == 0) {
-      lines[i] = lines[i].substring(indent[0].length);  // remove indent
-    }
-  }
+  lines = raw.split('\n').map(l => l.trim());
   raw.innerText = lines.join('\n');  
 }
 
