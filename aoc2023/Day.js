@@ -104,3 +104,14 @@ function height() {
 function width() {
   return lines[0].length;
 }
+
+function charAt(x, y) {
+  if (inBounds(x, y)) {
+    return lines[y][x];
+  }
+  return '\0';
+}
+
+function inBounds(x, y) {
+  return x >= 0 && y >= 0 && y < lines.length && x < lines[0].length;
+}
