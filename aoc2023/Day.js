@@ -115,3 +115,46 @@ function charAt(x, y) {
 function inBounds(x, y) {
   return x >= 0 && y >= 0 && y < lines.length && x < lines[0].length;
 }
+
+var mapChars = {
+  '.': 'dot',
+  '#': 'hash',
+  '>': 'angle',
+  '<': 'angle',
+  'v': 'angle',
+  '^': 'angle',
+  'o': 'ooo',
+  'O': 'ooo',
+}
+
+function colorMap(id, moreMap) {
+  id = id || 'pre';
+  moreMap = moreMap || mapChars;
+  var pre = document.getElementById(id);
+  pre.innerHTML = '';
+  var rows = id == 'debug1' ? debugLines[0].split('\n') : id == 'debug2' ? debugLines[1].split('\n') : lines;
+  for (var line of rows) {
+    var div = document.createElement('div');
+    var str = '';
+    var strcls = null;
+    for (var i = 0; i <= line.length; i++) {
+      var ch = i < line.length ? line[i] : '\0';
+      var cls = i < ch in mapChars ? mapChars[ch] : ch in moreMap ? moreMap[ch] : 'other';
+      if (cls != strcls) {
+        if (strcls != null) {
+          var span = document.createElement('span');
+          if (strcls != null) {
+            span.classList.add(strcls);
+            span.innerText = str;
+            div.appendChild(span);
+          }
+        }
+        strcls = cls;
+        str = '';
+      }
+      str += ch;
+    }
+    pre.appendChild(div);
+  }
+
+}

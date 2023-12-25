@@ -17,3 +17,19 @@ pre {
 td {
   vertical-align: top;
 }
+
+.dot {
+  color: #66f;
+}
+.hash {
+  color: #990;
+}
+.angle {
+  color: #0c0;
+}
+.ooo {
+  color: #fff;
+}
+.other {
+  color: red;
+}
