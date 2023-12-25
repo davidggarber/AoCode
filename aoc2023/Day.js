@@ -139,7 +139,7 @@ function colorMap(id, moreMap) {
     var strcls = null;
     for (var i = 0; i <= line.length; i++) {
       var ch = i < line.length ? line[i] : '\0';
-      var cls = i < ch in mapChars ? mapChars[ch] : ch in moreMap ? moreMap[ch] : 'other';
+      var cls = (ch in mapChars) ? mapChars[ch] : (ch in moreMap) ? moreMap[ch] : 'other';
       if (cls != strcls) {
         if (strcls != null) {
           var span = document.createElement('span');

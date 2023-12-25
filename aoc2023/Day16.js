@@ -1,4 +1,13 @@
+var colorMap16 = {
+  '/': 'slash',
+  '\\': 'slash',
+  '|': 'split',
+  '-': 'split',
+}
+
 function solve1() {
+  colorMap('pre', colorMap16);
+
   print(followFrom([0,0,1,0], true));
 }
 

@@ -1,4 +1,6 @@
 function solve1() {
+  colorMap();
+
   var sum = 0;
   var cols = pivot(lines);
 
