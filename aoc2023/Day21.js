@@ -8,6 +8,7 @@ function solve1() {
       break;
     }
   }
+  return;
 
   var firstReached = {};
   var nextStep = [];
@@ -30,6 +31,7 @@ function solve1() {
     }
   }
 
+
   for (var y = 0; y < height(); y++) {
     var str = '';
     for (var x = 0; x < width(); x++) {
@@ -47,6 +49,9 @@ function solve1() {
   var sum = Object.values(firstReached).filter(v => (v % 2) == 0).length;
 
   print(sum);
+
+  colorMap();
+  colorMap('debug1');
 }
 
 var gridReached = {};
@@ -66,8 +71,149 @@ function wrapCharAt(x, y, step) {
 
 function solve2() {
   var radius = 26501365;
+  // var radius = 5000;
   var modulo = width() + height();
   var rMod = radius % modulo;
+  trace('Modulo is ' + modulo);
+  trace('Step target ' + radius + ' % ' + modulo + ' == ' + rMod);
+
+  // after modulo/2, start tile is half filled with a diamond
+  // after modulo, start tile is fully filled in, with even polarity
+  //     and neighbors each have 1/4 filled in from one side
+  // after modulo*3/2, side neighbors are 3/4 filled in, touching opposite sides
+  //     and corner neighbors are 1/8 filled in at corners
+  // after modulo*2, side neighbors are filled in with odd polarity
+  //     and corner neighbors are 7/8 filled in, missing far corners
+
+  // All modulo starting points
+  var firstSide = (width() + 1) / 66;
+  var secondSide = firstSide + width();
+  var middle = Math.floor(width() / 2);
+  var firstCorner = width() + 1;
+  var secondCorner = width() + 1 + height();
+  
+  var evenFull = fillTile(start, 0, 2 * modulo + rMod);
+  trace('Even full = ' + evenFull);
+  // All evenFull tiles are the same, whether starting in the middle or a corner
+
+  var oddFull = fillTile([0, middle], 0, 2 * modulo + rMod);
+  trace('Odd full = ' + oddFull);
+  // trace('S = ' + fillTile([middle, 0], firstSide, 2 * modulo + rMod));
+  // trace('E = ' + fillTile([width() - 1, middle], firstSide, 2 * modulo + rMod));
+  // trace('SEE = ' + fillTile([0, 0], secondCorner, 2 * modulo + rMod));
+  // All oddFull tiles are the same, regardless of side or corner start
+
+  // rMod will leave 4 points
+  var sPoint = fillTile([middle, 0], secondSide, modulo + rMod);
+  var nPoint = fillTile([middle, height() - 1], secondSide, modulo + rMod);
+  var ePoint = fillTile([0, middle], secondSide, modulo + rMod);
+  var wPoint = fillTile([width() - 1, middle], secondSide, modulo + rMod);
+  trace('S point = ' + sPoint);
+  trace('N point = ' + nPoint);
+  trace('E point = ' + ePoint);
+  trace('W point = ' + wPoint);
+
+  // Then 4 diagonals, all of odd length:
+  var seCorner = fillTile([0, 0], firstCorner, modulo + rMod);
+  var neCorner = fillTile([0, height() - 1], firstCorner, modulo + rMod);
+  var swCorner = fillTile([width() - 1, 0], firstCorner, modulo + rMod);
+  var nwCorner = fillTile([width() - 1, height() - 1], firstCorner, modulo + rMod);
+  trace('SE corner 7/8 = ' + seCorner);
+  trace('NE corner 7/8 = ' + neCorner);
+  trace('SW corner 7/8 = ' + swCorner);
+  trace('NW corner 7/8 = ' + nwCorner);
+
+  var sseCorner = fillTile([0, 0], secondCorner, modulo + rMod);
+  var nneCorner = fillTile([0, height() - 1], secondCorner, modulo + rMod);
+  var sswCorner = fillTile([width() - 1, 0], secondCorner, modulo + rMod);
+  var nnwCorner = fillTile([width() - 1, height() - 1], secondCorner, modulo + rMod);
+  trace('SSE corner 1/8 = ' + sseCorner);
+  trace('NNE corner 1/8 = ' + nneCorner);
+  trace('SSW corner 1/8 = ' + sswCorner);
+  trace('NNW corner 1/8 = ' + nnwCorner);
+
+  // At radius, the points will be N tiles from start
+  var tileDistance = Math.floor((radius - firstSide) / width());
+  trace('Full tiles between start and points = ' + tileDistance);
+  // Interior height will always be odd (because of reflection around 0)
+  // Because rMod < width(), there will always be one more odd that even
+  trace('Full interior height = ' + (tileDistance * 2 + 1));
+  var cOdds = Math.ceil((tileDistance * 2 + 1) / 2);
+  var cEvens = cOdds - 1;
+  var smCorners = cEvens;  // where odds meet evens, small (1/8) corners
+  var lgCorners = cOdds;  // where odds meet odds, or evens meet evens, large (7/8) corners
+  // trace('On axis, ' + cEvens + ' evens and ' + cOdds + ' odds');
+  cOdds += 2 * ((1 + cOdds - 2) * tileDistance / 2);
+  cEvens += 2 * ((cEvens - 2) * tileDistance / 2);
+  trace('Total evens = ' + cEvens + '; odds = ' + cOdds);
+  
+  var sum = cEvens * evenFull + cOdds * oddFull;
+  sum += sPoint + nPoint + ePoint + wPoint;
+  sum += smCorners * sseCorner + lgCorners * seCorner;
+  sum += smCorners * nneCorner + lgCorners * swCorner;
+  sum += smCorners * sswCorner + lgCorners * neCorner;
+  sum += smCorners * nnwCorner + lgCorners * nwCorner;
+
+  print(sum);
+}
+
+function fillTile(start, first, steps, doTrace) {
+  doTrace |= false;
+  var firstReached = {};
+  var nextStep = [];
+  nextStep.push(start);
+  var odd = first % 2 == 1;
+  firstReached[start] = odd;
+  for (var step = first; step < steps; step++) {
+    odd = !odd;
+    var thisStep = nextStep;
+    nextStep = [];
+    while (thisStep.length > 0) {
+      var p = thisStep.pop();
+      var neighbors = [[p[0]-1,p[1]], [p[0]+1,p[1]], [p[0],p[1]-1], [p[0],p[1]+1]];
+      for (var n of neighbors) {
+        if ((charAt(n[0], n[1]) == '.' || charAt(n[0], n[1]) == 'S') && !(n in firstReached)) {
+          firstReached[n] = odd;
+          nextStep.push(n);
+        }
+      }  
+    }
+  }
+  if (doTrace) {
+    traceReached(firstReached, (r) => r == odd);
+  }
+
+  return Object.values(firstReached).filter(o => o == odd).length;
+}
+
+function traceReached(reached, lambda) {
+  for (var y = 0; y < height(); y++) {
+    var str = '';
+    for (var x = 0; x < width(); x++) {
+      var p = [x,y];
+      if (p in reached) {
+        str += lambda(reached[p]) ? 'O' : '.';
+      }
+      else {
+        str += charAt(x, y);
+      }
+    }
+    trace(str);
+  }
+  // colorMap('debug' + (curPart + 1));
+}
+
+function solve2a() {
+  var radius = 26501365;
+  // var radius = 1000;
+
+  var modulo = width() + height();
+  var rMod = radius % modulo;
+  radius = modulo * 10 + rMod;
+
+
+  trace('Modulo is ' + modulo);
+  trace('Step target ' + radius + ' % ' + modulo + ' == ' + rMod);
   var modStep = [];
   var modReached = [0];
   var modDelta = [0];
