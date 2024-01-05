@@ -1,13 +1,21 @@
 var exit;
 var pqueue = [];
 
-function enqueue(p) {
+function tripletRanker(a, b) {
+  return a[2] - b[2];
+}
+
+function exitDistRanker(a, b) {
+  return a[2] + dist(a, exit) - (b[2] + dist(b, exit));
+}
+
+function enqueue(p, ranker) {
   pqueue.push(p);
   var i = pqueue.length - 1;
   while (i > 0) {
     var j = Math.floor(i / 2);
     var jp = pqueue[j];
-    if (p[2] + dist(p, exit) < jp[2] + dist(jp, exit)) {
+    if (ranker(p, jp) < 0) {
       break;
     }
     pqueue[j] = p;
@@ -16,7 +24,7 @@ function enqueue(p) {
   }
 }
 
-function dequeue() {
+function dequeue(ranker) {
   var pop = pqueue.pop();
   if (pqueue.length == 0) {
     return pop;
@@ -30,12 +38,12 @@ function dequeue() {
     var jp = pqueue[j];
     if (k < pqueue.length) {
       var kp = pqueue[k];
-      if (kp[2] + dist(kp, exit) > jp[2] + dist(jp, exit)) {
+      if (ranker(kp, jp) > 0) {
         j = k;
-        jp = k;
+        jp = kp;
       }
     }
-    if (pop[2] + dist(pop, exit) > jp[2] + dist(jp, exit)) {
+    if (ranker(pop, jp) > 0) {
       break;
     }
     pqueue[j] = pop;
@@ -72,15 +80,248 @@ function isPath(p, from) {
   // }
 }
 
+// Vector addition
+function vadd(a, b) {
+  return [a[0]+b[0], a[1]+b[1]];
+}
+
+var dirs = [[-1,0], [0,-1], [1,0], [0,1]];
+var slides = '<^>v';
+
+function canMoveSlippery(pos, dir) {
+  var n = vadd(pos, dir);
+  var ch = charAt(n[0], n[1]);
+  if (ch == '.') { return true; }
+  var i = slides.indexOf(ch);
+  if (i < 0) {
+    return false;  // '#'
+  }
+  return dir == dirs[i];
+}
+
+function canMove(pos, dir) {
+  var n = vadd(pos, dir);
+  var ch = charAt(n[0], n[1]);
+  return ch != '#' && ch != '\0';
+}
+
+function buildBranchGraph(slippery) {
+  exit = [lines[height() - 1].indexOf('.'), height()-1];
+  var start = [lines[0].indexOf('.'), 0];  // x, y, distance travelled, prior step set
+
+  var allBranches = {};
+  allBranches[start] = start;
+  allBranches[exit] = exit;
+//  [start, exit];  // keys: node points, values: list of downstream next branch nodes
+  for (var y = 1; y < height() - 1; y++) {
+    for (var x = 1; x < width() - 1; x++) {
+      if (charAt(x, y) != '#') {
+        var pos = [x, y];
+        var neighbors = dirs.map(d => vadd(pos, d)).filter(n => charAt(n[0],n[1]) != '#');
+        if (neighbors.length > 2) {
+          allBranches[pos] = pos;
+        }
+      }
+    }
+  }
+
+  var cm = slippery ? canMoveSlippery : canMove;
+
+  var graph = {};
+  for (var branch of Object.values(allBranches)) {
+    graph[branch] = {};  // downstream neighbors: distances
+    var queue = [branch];
+    var seen = {};
+    seen[branch] = 0;
+    while (queue.length > 0) {
+      var pos = queue.pop();
+      var dist = seen[pos];
+      var neighbors = dirs.filter(d => cm(pos, d)).map(d => vadd(pos, d));
+      for (var n of neighbors) {
+        if (!(n in seen)) {
+          if (n in allBranches) {
+            graph[branch][n] = dist + 1;
+          }
+          else {
+            seen[n] = dist + 1;
+            queue.push(n);
+          }
+        }
+      }
+    }
+  }
+
+  return graph;
+}
+
 function solve1() {
   exit = [lines[height() - 1].indexOf('.'), height()-1];
+  var start = [lines[0].indexOf('.'), 0];  // x, y, distance travelled, prior step set
+  var graph = buildBranchGraph(true);
+
+  var startPath = {};
+  startPath[start] = true;
+  var paths = [Object.keys(startPath)];
+  var fullPaths = [];
+  while (paths.length > 0) {
+    var nextPaths = [];
+    for (var p of paths) {
+      var end = p[p.length - 1];
+      var nexts = Object.keys(graph[end]);
+      for (var n of nexts) {
+        if (p.indexOf(n) < 0) {
+          var q = structuredClone(p);
+          q.push(n);
+          if (n == exit) {
+            fullPaths.push(q);
+          }
+          else {
+            nextPaths.push(q);
+          }
+        }
+      }
+      paths = nextPaths;
+    }
+  }
+  
+  var max = 0;
+  var best = null;
+  for (var path of fullPaths) {
+    var prev = null;
+    var dist = 0;
+    for (var node of path) {
+      if (prev != null) {
+        dist += graph[prev][node];
+      }
+      prev = node;
+    }
+    // trace(dist + ': ' + path.join(' -> '));
+    if (dist > max) {
+      max = dist;
+      best = path;
+    }
+  }
+
+  var draw = structuredClone(lines);
+  var j = 0;
+  for (var node of best) {
+    var pos = node.split(',').map(p => parseInt(p));
+    draw[pos[1]] = draw[pos[1]].substring(0, pos[0]) + (j++) + draw[pos[1]].substring(pos[0] + 1);
+  }
+  for (var d of draw) {
+    trace(d);
+  }
+  colorMap('debug1');
+
+  print(max);
+}
+
+function solve2() {
+  exit = [lines[height() - 1].indexOf('.'), height()-1];
+  var start = [lines[0].indexOf('.'), 0];  // x, y, distance travelled, prior step set
+  var graph = buildBranchGraph(false);
+
+  // Clean up one edge case: branch prior to exit should be treated as having only one down-stream
+  var lastBranch = Object.keys(graph[exit])[0];
+  graph[lastBranch] = {};
+  graph[lastBranch][exit] = graph[exit][lastBranch];
+
+  pqueue = [];
+  enqueue([start, [], 0], tripletRanker);  // position, previous branches, distance
+
+  var longest = 0;
+  var longPath = null;
+
+  var counter = 0;
+  while (pqueue.length > 0) {
+    var pos = dequeue(tripletRanker);
+    if (++counter % 100000 == 0) {
+      console.log('Processed ' + counter + '. Still tracking ' + pqueue.length + ' in queue');
+    }
+    var nexts = graph[pos[0]];
+    for (var n of Object.keys(nexts)) {
+      if (pos[1].indexOf(n) < 0) {
+        var path = structuredClone(pos[1]);
+        path.push(n);
+        var dist = pos[2] + nexts[n];
+        if (n == exit) {
+          if (dist > longest) {
+            console.log('Found a path of ' + dist + '. Still tracking ' + pqueue.length + ' in queue');
+            longest = dist;
+            longPath = path;
+          }
+        }
+        else {
+          enqueue([n, path, dist], tripletRanker);
+        }
+      }
+    }
+  }
+  print(longest);
+}
+
+function solve2a() {
+  exit = [lines[height() - 1].indexOf('.'), height()-1];
+  var start = [lines[0].indexOf('.'), 0];  // x, y, distance travelled, prior step set
+  var graph = buildBranchGraph(false);
+
+  // Clean up one edge case: branch prior to exit should be treated as having only one down-stream
+  var lastBranch = Object.keys(graph[exit])[0];
+  graph[lastBranch] = {};
+  graph[lastBranch][exit] = graph[exit][lastBranch];
+
+  var startPath = {};
+  startPath[start] = true;
+  var paths = [Object.keys(startPath)];
+  var fullPaths = [];
+  while (paths.length > 0) {
+    var nextPaths = [];
+    for (var p of paths) {
+      var end = p[p.length - 1];
+      var nexts = Object.keys(graph[end]);
+      for (var n of nexts) {
+        if (p.indexOf(n) < 0) {
+          var q = structuredClone(p);
+          q.push(n);
+          if (n == exit) {
+            fullPaths.push(q);
+          }
+          else {
+            nextPaths.push(q);
+          }
+        }
+      }
+      paths = nextPaths;
+    }
+  }
+  
+  var max = 0;
+  for (var path of fullPaths) {
+    var prev = null;
+    var dist = 0;
+    for (var node of path) {
+      if (prev != null) {
+        dist += graph[prev][node];
+      }
+      prev = node;
+    }
+    trace(dist + ': ' + path.join(' -> '));
+    max = Math.max(max, dist);
+  }
+
+  print(max);
+}
+
+function solve1a() {
+  exit = [lines[height() - 1].indexOf('.'), height()-1];
   var start = [lines[0].indexOf('.'), 0, 0, {}];  // x, y, distance travelled, prior step set
+
   pqueue.push(start);
   var branches = {};
   var path = null;
   var altPaths = [];
   while (pqueue.length > 0) {
-    var p = dequeue();
+    var p = dequeue(exitDistRanker);
     // console.log(p.join(','));
     if (dist(p, exit) == 0) {
       console.log('Path found: ' + p[2]);
@@ -100,7 +341,7 @@ function solve1() {
       n.push(p[2] + 1);  // step #
       n.push(structuredClone(p[3]));  // clone p's history
       n[3][pos] = p[2];  // append pos to history
-      enqueue(n);
+      enqueue(n, exitDistRanker);
     }
   }
 
@@ -133,16 +374,6 @@ function solve1() {
   }
 
   colorMap();
-  colorMap('debug1');
+  colorMap('debug2');
 
-}
-
-
-function solve2() {
-  var sum = 0;
-  for (var line of lines) {
-    // trace(power);
-  }
-
-  // print(sum);
 }
