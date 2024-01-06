@@ -1,13 +1,16 @@
 var start = [];
 
-function solve1() {
+function findStart() {
   for (var y = 0; y < height(); y++) {
     var x = lines[y].indexOf('S');
     if (x >= 0) {
-      start = [x,y];
-      break;
+      return start = [x,y];
     }
   }
+}
+
+function solve1a() {
+  findStart();
   return;
 
   var firstReached = {};
@@ -70,12 +73,15 @@ function wrapCharAt(x, y, step) {
 }
 
 function solve2() {
+  findStart();
   var radius = 26501365;
   // var radius = 5000;
   var modulo = width() + height();
   var rMod = radius % modulo;
   trace('Modulo is ' + modulo);
   trace('Step target ' + radius + ' % ' + modulo + ' == ' + rMod);
+  var cycles = (radius - rMod) / modulo;
+  trace('Outermost tiles are ' + cycles + ' away from the starting title');
 
   // after modulo/2, start tile is half filled with a diamond
   // after modulo, start tile is fully filled in, with even polarity
@@ -132,29 +138,58 @@ function solve2() {
   trace('SSW corner 1/8 = ' + sswCorner);
   trace('NNW corner 1/8 = ' + nnwCorner);
 
-  // At radius, the points will be N tiles from start
-  var tileDistance = Math.floor((radius - firstSide) / width());
-  trace('Full tiles between start and points = ' + tileDistance);
-  // Interior height will always be odd (because of reflection around 0)
-  // Because rMod < width(), there will always be one more odd that even
-  trace('Full interior height = ' + (tileDistance * 2 + 1));
-  var cOdds = Math.ceil((tileDistance * 2 + 1) / 2);
-  var cEvens = cOdds - 1;
-  var smCorners = cEvens;  // where odds meet evens, small (1/8) corners
-  var lgCorners = cOdds;  // where odds meet odds, or evens meet evens, large (7/8) corners
-  // trace('On axis, ' + cEvens + ' evens and ' + cOdds + ' odds');
-  cOdds += 2 * ((1 + cOdds - 2) * tileDistance / 2);
-  cEvens += 2 * ((cEvens - 2) * tileDistance / 2);
-  trace('Total evens = ' + cEvens + '; odds = ' + cOdds);
-  
-  var sum = cEvens * evenFull + cOdds * oddFull;
-  sum += sPoint + nPoint + ePoint + wPoint;
-  sum += smCorners * sseCorner + lgCorners * seCorner;
-  sum += smCorners * nneCorner + lgCorners * swCorner;
-  sum += smCorners * sswCorner + lgCorners * neCorner;
-  sum += smCorners * nnwCorner + lgCorners * nwCorner;
+  var testCycles = [0, 1, 2, 3, cycles];
+  var prevSum = 0;
+  var prevDelta = 0;
+  for (var cyc of testCycles) {
+    // Count by verticals.
+    // 3 edge cases:
+    var leftTip = wPoint + nnwCorner + sswCorner;
+    var rightTip = ePoint + nneCorner + sseCorner;
+    var middle = nPoint + sPoint;
+    // All other edge angles are the same for every vertical
+    var leftAngles = nnwCorner + nwCorner + sswCorner + swCorner;
+    var rightAngles = nneCorner + neCorner + sseCorner + seCorner;
+    // Get the tile dimensions
+    var axisHeight = cyc * 2;  // # of full cells along a home axis
+    var sideHeight = axisHeight - 1;  // # of full cells, not counting origin
+    var edgeSum = middle + leftTip + rightTip + sideHeight * (leftAngles + rightAngles);
+    // Calculate the number of filled tiles (odd and even variants)
+    var evenCount = axisHeight + (sideHeight + 1) * sideHeight;
+    var oddCount = sideHeight + (sideHeight - 1) * sideHeight;  // == evenCount - 1 - 2 * sideHeight
+    var sum = edgeSum + evenCount * evenFull + oddCount * oddFull;
+    var delta = sum - prevSum;
+    trace(cyc + ' cycles + ' + rMod + ' = ' + (cyc * modulo + rMod) + ' steps reaches ' + sum + ' (delta=' + delta + ', dd=' + (delta-prevDelta) + ')');
+    prevSum = sum;
+    prevDelta = delta;
+  }
 
-  print(sum);
+
+
+  // // At radius, the points will be N tiles from start
+  // // N will be even, because at rMod, N = 0, and each modulo adds N+=2
+  // var tileDistance = Math.floor((radius - firstSide) / width());
+  // trace('Full tiles between start and points = ' + tileDistance);
+  // // Interior height will always be odd (because of reflection around 0)
+  // // Because rMod < width(), there will always be one more odd that even
+  // trace('Full interior height = ' + (tileDistance * 2 + 1));
+  // var cOdds = Math.ceil((tileDistance * 2 + 1) / 2);
+  // var cEvens = cOdds - 1;
+  // var smCorners = cEvens;  // where odds meet evens, small (1/8) corners
+  // var lgCorners = cOdds;  // where odds meet odds, or evens meet evens, large (7/8) corners
+  // // trace('On axis, ' + cEvens + ' evens and ' + cOdds + ' odds');
+  // cOdds += 2 * ((1 + cOdds - 2) * tileDistance / 2);
+  // cEvens += 2 * ((cEvens - 2) * tileDistance / 2);
+  // trace('Total evens = ' + cEvens + '; odds = ' + cOdds);
+  
+  // var sum = cEvens * evenFull + cOdds * oddFull;
+  // sum += sPoint + nPoint + ePoint + wPoint;
+  // sum += smCorners * sseCorner + lgCorners * seCorner;
+  // sum += smCorners * nneCorner + lgCorners * swCorner;
+  // sum += smCorners * sswCorner + lgCorners * neCorner;
+  // sum += smCorners * nnwCorner + lgCorners * nwCorner;
+
+  print(prevSum);
 }
 
 function fillTile(start, first, steps, doTrace) {
@@ -203,14 +238,13 @@ function traceReached(reached, lambda) {
   // colorMap('debug' + (curPart + 1));
 }
 
-function solve2a() {
+function solve1() {
+  findStart();
   var radius = 26501365;
   // var radius = 1000;
 
   var modulo = width() + height();
   var rMod = radius % modulo;
-  radius = modulo * 10 + rMod;
-
 
   trace('Modulo is ' + modulo);
   trace('Step target ' + radius + ' % ' + modulo + ' == ' + rMod);
@@ -247,7 +281,7 @@ function solve2a() {
       modReached.push(r);
       modDelta.push(d);
       console.log('Step ' + step + ': dd=' + dd);
-      trace('Step ' + step + ' reached ' + r + ': delta ' + d + ' dd ' + dd);
+      trace('Step ' + step + ' reached ' + r + ': delta ' + d + ' dd ' + dd);  // REVIEW: why doesn't 1st full modulo 
       if (dd == prevDD) {
         break;
       }
