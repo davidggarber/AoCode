@@ -14,34 +14,36 @@ function solve1() {
   }
   cComps = Object.keys(comps).length;
 
-  var startRings = cComps < 30 ? 1 : 6;  // Sample data can succeed with 1 ring. Real data needs 6.
   var keys = Object.keys(comps);
-  for (var rings = startRings; rings <= 10; rings++) {
-    for (var start of keys) {
-      reset(start, rings);
-      if (shuffle(rings > 2) <= 3) {
-        var group1 = Object.entries(comps).filter(e => e[1]).length;
-        var group2 = cComps - group1;
-        if (group1 > 0 && group2 > 0) {
-          trace(group1 + ' / ' + group2 + ' split.');
-          print(group1 * group2);
-          return;
-        }
+  for (var start of keys) {
+    reset(start);
+    if (shuffle(true) <= 3) {
+      var group1 = Object.entries(comps).filter(e => e[1]).length;
+      var group2 = cComps - group1;
+      if (group1 > 0 && group2 > 0) {
+        trace(group1 + ' / ' + group2 + ' split has <= 3 crossings.');
+        print(group1 * group2);
+        return;
       }
-    }  
-  }
+    }
+  }  
 }
 
 // Pick one component at random, and move both it and all its neighbors to a second group
-function reset(move, rings) {
+function reset(move) {
   // trace('*****************************************');
-  trace('Try starting with ' + move + ' and ' + rings + ' rings of neighbors...');
   for (var k of Object.keys(comps)) {
     comps[k] = k != move;
   }
-  for (var r = 0; r < rings; r++) {
+  var group2 = Object.entries(comps).filter(e => !e[1]).length;
+  var rings = 0;
+  while (group2 * 3 < cComps) {  // Need ~1/3 of components initially in 2nd group
     moveFirstNeighbors();
+    rings++;
+    group2 = Object.entries(comps).filter(e => !e[1]).length;
   }
+  var group1 = cComps - group2;
+  trace('Try starting with ' + move + ' and ' + rings + ' rings of neighbors for a ' + group1 + '/' + group2 + ' initial split...');
 }
 
 function shuffle(allowBothDir) {
@@ -64,14 +66,13 @@ function shuffle(allowBothDir) {
       }
     }
     if (move == null) {
-    console.log(group1 + ' / ' + group2 + ' split with ' + crossing + ' crossings. No options.')
-    if (oneDir && allowBothDir) {
-        console.log('Allow both directions');
+      if (oneDir && allowBothDir) {
+        console.log(group1 + ' / ' + group2 + ' split with ' + crossing + ' crossings. Allow both directions');
         oneDir = false;  
         continue;
       }
       else {
-        // console.log('Done');
+        console.log(group1 + ' / ' + group2 + ' split with ' + crossing + ' crossings. No options.')
         break;
       }
     }
