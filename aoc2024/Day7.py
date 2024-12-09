@@ -55,7 +55,9 @@ def test2(line):
 
 sum = 0
 for line in lines:
-  val = test2(line)
+  val = test1(line)
+  if val == 0:
+    val = test2(line)
   sum += val
 
 print("part 2: " + str(sum))
