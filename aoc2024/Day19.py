@@ -19,17 +19,20 @@ def anySolveTowel(towel):
       return True
   return False
 
+known = {}
 def allSolveTowel(towel):
   global parts
-  if len(towel) == 0:
-    return 1
-  starts = [p for p in parts if towel[:len(p)] == p]
-  if len(starts) == 0:
-    return 0
-  print(f"{len(starts)} ways to start {towel}")
+  if towel in known:
+    return known[towel]
   variants = 0
-  for s in starts:
-    variants += allSolveTowel(towel[len(s):])
+  if len(towel) == 0:
+    variants = 1
+  starts = [p for p in parts if towel[:len(p)] == p]
+  if len(starts) > 0:
+    # print(f"{len(starts)} ways to start {towel}")
+    for s in starts:
+      variants += allSolveTowel(towel[len(s):])
+  known[towel] = variants
   return variants
 
 
@@ -41,6 +44,6 @@ print(f"part 1: {count}")
 
 sum = 0
 for g in goals:
-  if allSolveTowel(g):
-    sum += 1
+  print(g)
+  sum += allSolveTowel(g)
 print(f"part 2: {sum}")
